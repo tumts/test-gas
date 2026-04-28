@@ -33,6 +33,11 @@ Di Editor GAS, buka **Project Settings \> Script Properties**, lalu tambahkan:
 * **Property**: GOWA\_API\_KEY  
 * **Value**: username:password *(Kredensial peladen GOWA)*
 
+* **Property**: OTP\_SECRET\_PEPPER  
+* **Value**: GowaS3cr3tP3pp3r2026!@# *(atau value baru yang diinginkan sebagai pepper untuk hashing OTP)*
+
+> **Penting:** Property `OTP_SECRET_PEPPER` **wajib** ditambahkan sebelum deploy ulang, agar fungsi OTP tidak rusak.
+
 **2\. Deployment (Web App)**
 
 Klik **Deploy \> New deployment \> Web app**. Atur hak akses:

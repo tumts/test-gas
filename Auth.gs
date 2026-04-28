@@ -4,9 +4,17 @@
  * Menerapkan hashing, expiry, rate limiting, dan pembatasan percobaan.
  */
 
-// Konfigurasi rahasia untuk hashing OTP (Pepper)
-// JANGAN UBAH setelah sistem berjalan agar hash lama tidak tidak valid
-const OTP_SECRET_PEPPER = 'GowaS3cr3tP3pp3r2026!@#';
+/**
+ * Mengambil OTP_SECRET_PEPPER dari ScriptProperties.
+ * Pastikan property ini sudah dikonfigurasi sebelum deploy.
+ */
+function getOtpPepper() {
+  const pepper = PropertiesService.getScriptProperties().getProperty('OTP_SECRET_PEPPER');
+  if (!pepper) {
+    throw new Error('OTP_SECRET_PEPPER belum dikonfigurasi di Script Properties.');
+  }
+  return pepper;
+}
 
 /**
  * Konfigurasi API Key dan Endpoint Gowa.
@@ -91,7 +99,7 @@ function sendOtp(phoneNumber) {
 
   // Generate OTP dan Hash
   const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-  otpData.codeHash = generateHash(phoneNumber + otpCode + OTP_SECRET_PEPPER);
+  otpData.codeHash = generateHash(phoneNumber + otpCode + getOtpPepper());
 
   // Kirim via API GOWA
   const config = getGowaConfig();
@@ -169,7 +177,7 @@ function verifyOtp(phoneNumber, otp) {
   scriptProps.setProperty(propKey, JSON.stringify(otpData));
 
   // 3. Verifikasi Hash
-  const inputHash = generateHash(phoneNumber + otp + OTP_SECRET_PEPPER);
+  const inputHash = generateHash(phoneNumber + otp + getOtpPepper());
   
   if (inputHash === otpData.codeHash) {
     // Sukses, bersihkan data OTP

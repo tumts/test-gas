@@ -4,16 +4,18 @@
  */
 
 function testGowaConnection() {
+  const config = getGowaConfig();
+
   // Menggunakan endpoint standar GOWA untuk cek koneksi/device
-  const url = GOWA_CONFIG.BASE_URL + '/app/devices'; 
+  const url = config.BASE_URL + '/app/devices'; 
   
   Logger.log('=== MEMULAI TEST KONEKSI KE GOWA ===');
   Logger.log('URL Target: ' + url);
-  Logger.log('Kredensial (5 karakter pertama): ' + GOWA_CONFIG.API_KEY.substring(0, 5) + '...');
+  Logger.log('Kredensial (5 karakter pertama): ' + config.API_KEY.substring(0, 5) + '...');
 
   try {
     // KUNCI PERBAIKAN: Encode kredensial ke Base64 untuk Basic Auth
-    const encodedAuth = Utilities.base64Encode(GOWA_CONFIG.API_KEY);
+    const encodedAuth = Utilities.base64Encode(config.API_KEY);
 
     const response = UrlFetchApp.fetch(url, {
       method: 'get', 

@@ -1,6 +1,20 @@
 # **Changelog**
 
 ## **Unreleased**
+
+### **Fixed**
+
+* Timezone diubah dari `America/New_York` ke `Asia/Makassar`.
+* Bug variabel `GOWA_CONFIG` di `TesKoneksi.gs` — variabel global tidak ada, diganti dengan pemanggilan `getGowaConfig()`.
+
+### **Security**
+
+* `OTP_SECRET_PEPPER` dipindahkan dari hardcode di `Auth.gs` ke ScriptProperties untuk keamanan kredensial.
+
+### **Changed**
+
+* Akses webapp diubah dari `MYSELF` ke `ANYONE` untuk production readiness.
+
 ## **0.2.0**
 
 2026-04-08
