@@ -33,6 +33,7 @@ function describe(name, fn) {
   _afterEachFn = null;
   
   var suiteResult = { name: name, tests: [], passed: 0, failed: 0 };
+  _testResults.suites.push(suiteResult);
   
   Logger.log('');
   Logger.log('━━━ ' + name + ' ━━━');
@@ -48,7 +49,6 @@ function describe(name, fn) {
   
   suiteResult.passed = suiteResult.tests.filter(function(t) { return t.passed; }).length;
   suiteResult.failed = suiteResult.tests.filter(function(t) { return !t.passed; }).length;
-  _testResults.suites.push(suiteResult);
   
   _currentSuite = '';
   _beforeEachFn = null;
@@ -64,10 +64,11 @@ function it(name, fn) {
   _testResults.total++;
   var testResult = { name: name, passed: true, error: null };
   
+  var afterEachRan = false;
   try {
     if (_beforeEachFn) _beforeEachFn();
     fn();
-    if (_afterEachFn) _afterEachFn();
+    if (_afterEachFn) { _afterEachFn(); afterEachRan = true; }
     
     _testResults.passed++;
     Logger.log('  PASS: ' + name);
@@ -78,10 +79,10 @@ function it(name, fn) {
     _testResults.errors.push(_currentSuite + ' > ' + name + ': ' + e.message);
     Logger.log('  FAIL: ' + name);
     Logger.log('        Reason: ' + e.message);
-    
-    if (_afterEachFn) {
-      try { _afterEachFn(); } catch (cleanupErr) { /* ignore */ }
-    }
+  }
+  
+  if (_afterEachFn && !afterEachRan) {
+    try { _afterEachFn(); } catch (cleanupErr) { /* ignore */ }
   }
   
   // Tambahkan ke suite terakhir
