@@ -216,7 +216,8 @@ function verifySetup() {
   required.forEach(function(prop) {
     var value = allProps[prop.key];
     var status = value ? '✅' : (prop.critical ? '❌' : '⚠️');
-    var display = value ? (value.substring(0, 10) + '...') : 'BELUM DIISI';
+    var isSensitive = (prop.key === 'GOWA_API_KEY' || prop.key === 'OTP_SECRET_PEPPER' || prop.key === 'GOOGLE_CLIENT_ID');
+    var display = value ? (isSensitive ? '***SET***' : (value.substring(0, 10) + '...')) : 'BELUM DIISI';
     Logger.log(status + ' ' + prop.key + ': ' + display);
     Logger.log('   → ' + prop.desc);
     if (!value && prop.critical) allOk = false;
