@@ -7,6 +7,9 @@ Sistem autentikasi OTP WhatsApp ini dibangun menggunakan **Google Apps Script (G
 * **Verifikasi Internal**: *Generate* dan validasi OTP menggunakan PropertiesService GAS (tanpa basis data eksternal).  
 * **Manajemen Sesi**: Sesi pengguna tersimpan selama 1 jam untuk mencegah login berulang.  
 * **Keamanan API**: Menggunakan *Basic Auth* (enkripsi *Base64*) untuk transmisi data.
+* **Hub Dashboard**: Dashboard terpusat setelah login, menampilkan daftar aplikasi yang bisa diakses.
+* **Session Terpusat**: Session disimpan di Google Sheet, memungkinkan single sign-on ke beberapa Apps Script webapp.
+* **App Registry**: Daftar aplikasi dikelola via Google Sheet, mudah ditambah/dihapus oleh admin.
 
 ## **Struktur File**
 
@@ -17,6 +20,9 @@ Sistem autentikasi OTP WhatsApp ini dibangun menggunakan **Google Apps Script (G
 | TesKoneksi.gs | Skrip diagnostik pengujian server GOWA. |
 | GoogleAuth.gs | Verifikasi Google ID Token untuk login via Google. |
 | UserWhitelist.gs | Pengecekan whitelist user dari Google Sheet. |
+| Session.gs | Manajemen session terpusat (create, validate, delete, cleanup). |
+| AppRegistry.gs | Registry aplikasi hub, membaca dari Google Sheet tab 'apps'. |
+| dashboard.html | Halaman dashboard hub setelah login berhasil. |
 | \*.html | Antarmuka pengguna responsif (Login & Verifikasi). |
 
 ## **Panduan Instalasi & Deployment**
@@ -68,6 +74,20 @@ Di **Project Settings > Script Properties**, tambahkan juga:
 3. Isi header baris pertama: `email | phone | nama | role | status | ditambahkan_oleh | tanggal`
 4. Contoh data: `andi@gmail.com | 6281234567890 | Andi | admin | active | owner | 2026-04-29`
 5. Salin Sheet ID (dari URL: `https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit`) ke Script Property `USERS_SHEET_ID`
+
+**Tab `sessions` (otomatis dibuat):**
+Tab ini akan dibuat otomatis saat pertama kali ada user login. Tidak perlu setup manual.
+
+**Tab `apps` (registry aplikasi):**
+1. Tab `apps` akan dibuat otomatis dengan contoh data saat pertama kali dashboard diakses
+2. Untuk menambah aplikasi, isi baris baru di tab `apps` dengan kolom:
+   - `id`: Identifier unik (misal: `inventaris`)
+   - `name`: Nama tampilan (misal: `Aplikasi Inventaris`)
+   - `url`: URL deployment webapp (misal: `https://script.google.com/macros/s/DEPLOY_ID/exec`)
+   - `icon`: Emoji icon (misal: `📦`)
+   - `description`: Deskripsi singkat
+   - `requiredRole`: `user` (semua user) atau `admin` (hanya admin)
+   - `status`: `active` atau `inactive`
 
 **2\. Deployment (Web App)**
 

@@ -1,115 +1,123 @@
 /**
  * @file Code.gs
- * @description Entry point utama aplikasi yang menangani routing halaman (doGet) dan pemrosesan form (doPost).
- * Mengatur alur login dari input nomor HP hingga verifikasi OTP.
+ * @description Entry point utama Auth Hub. Menangani routing (doGet), 
+ * pemrosesan login (doPost), dan rendering halaman.
  */
 
 /**
- * Escape HTML special characters untuk mencegah HTML injection.
- * @param {string} str - String yang akan di-escape.
- * @returns {string} String yang sudah di-escape.
- */
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-/**
- * Merender halaman web app berdasarkan parameter query.
+ * Handler GET — cek session token, render dashboard atau login.
  * @param {Object} e - Event object dari Google Apps Script.
  * @returns {HtmlService.HtmlOutput}
  */
 function doGet(e) {
-  const userProps = PropertiesService.getUserProperties();
-  const sessionString = userProps.getProperty('session');
-
-  if (sessionString) {
-    const sessionData = JSON.parse(sessionString);
-    const now = new Date().toISOString();
-
-    if (sessionData.expiry > now) {
-      // Support both email (Google login) and phone (OTP login)
-      const identity = sessionData.email || sessionData.phone || 'Unknown';
-      const method = sessionData.loginMethod || 'otp';
-      const name = sessionData.name || identity;
-      return HtmlService.createHtmlOutput(
-        '<div style="font-family:sans-serif;text-align:center;margin-top:50px;">' +
-        '<h2>Anda sudah login</h2>' +
-        '<p>Selamat datang <b>' + escapeHtml(name) + '</b></p>' +
-        '<p style="color:#666;font-size:12px;">Login via: ' + escapeHtml(method) + ' | ' + escapeHtml(identity) + '</p>' +
-        '</div>'
-      );
-    } else {
-      userProps.deleteProperty('session');
+  const token = e.parameter.token || '';
+  const redirectUrl = e.parameter.redirect || '';
+  
+  // Jika ada token, validasi session dari Sheet
+  if (token) {
+    const session = validateSession(token);
+    
+    if (session.valid) {
+      // Jika ada redirect URL (dari child app), redirect ke sana dengan token
+      if (redirectUrl) {
+        const targetUrl = buildAppUrl(redirectUrl, token);
+        return HtmlService.createHtmlOutput(
+          '<script>window.top.location.href="' + targetUrl + '";</script>'
+        ).setTitle('Redirecting...');
+      }
+      
+      // Render dashboard
+      const apps = getRegisteredApps(session.role);
+      // Build app URLs dengan token
+      const appsWithToken = apps.map(function(app) {
+        return {
+          id: app.id,
+          name: app.name,
+          url: buildAppUrl(app.url, token),
+          icon: app.icon,
+          description: app.description
+        };
+      });
+      
+      return render('dashboard', {
+        sessionData: {
+          token: token,
+          email: session.email,
+          phone: session.phone,
+          name: session.name,
+          role: session.role,
+          loginMethod: session.loginMethod
+        },
+        apps: appsWithToken
+      });
     }
+    // Token invalid — jatuh ke login page
   }
-
+  
+  // Render login page
   const page = e.parameter.page || 'login';
   const phone = e.parameter.phone || '';
   const error = e.parameter.error || '';
 
-  return render(page, { phone: phone, error: error });
+  return render(page, { phone: phone, error: error, redirect: redirectUrl });
 }
 
 /**
- * Menangani pengiriman data form (POST) untuk kirim OTP dan verifikasi OTP.
+ * Handler POST — proses login (Google/OTP) dan logout.
  * @param {Object} e - Event object yang berisi parameter form.
  * @returns {HtmlService.HtmlOutput}
  */
 function doPost(e) {
   const action = e.parameter.action;
   const phone = e.parameter.phone || '';
+  const redirectParam = e.parameter.redirect || '';
 
   try {
+    // === LOGOUT ===
+    if (action === 'logout') {
+      const token = e.parameter.token || '';
+      if (token) {
+        deleteSession(token);
+      }
+      return render('login', { phone: '', error: '', redirect: '' });
+    }
+
     // === GOOGLE LOGIN ===
     if (action === 'google_login') {
       const idToken = e.parameter.id_token;
       const googleResult = verifyGoogleToken(idToken);
 
       if (!googleResult.success) {
-        return render('login', { phone: '', error: googleResult.message });
+        return render('login', { phone: '', error: googleResult.message, redirect: redirectParam });
       }
 
       // Cek whitelist
       const access = checkUserByEmail(googleResult.email);
 
       if (!access.found) {
-        return render('login', { phone: '', error: 'Email ' + googleResult.email + ' belum terdaftar. Hubungi admin untuk mendapatkan akses.' });
+        return render('login', { phone: '', error: 'Email ' + googleResult.email + ' belum terdaftar. Hubungi admin untuk mendapatkan akses.', redirect: redirectParam });
       }
       if (!access.allowed) {
-        return render('login', { phone: '', error: 'Akun Anda dinonaktifkan. Hubungi admin.' });
+        return render('login', { phone: '', error: 'Akun Anda dinonaktifkan. Hubungi admin.', redirect: redirectParam });
       }
 
-      // Buat session
-      const userProps = PropertiesService.getUserProperties();
-      const sessionData = {
+      // Buat session di Sheet
+      const token = createSession({
         email: googleResult.email,
+        phone: access.phone || '',
         name: access.name || googleResult.name,
         role: access.role,
-        loginMethod: 'google',
-        loginTime: new Date().toISOString(),
-        expiry: new Date(Date.now() + 3600000).toISOString()
-      };
-      userProps.setProperty('session', JSON.stringify(sessionData));
+        loginMethod: 'google'
+      });
 
-      return HtmlService.createHtmlOutput(
-        '<div style="font-family:sans-serif;text-align:center;margin-top:50px;">' +
-        '<h2>Login Berhasil!</h2>' +
-        '<p>Selamat datang <b>' + escapeHtml(access.name || googleResult.name) + '</b></p>' +
-        '<p style="color:#666;font-size:12px;">' + escapeHtml(googleResult.email) + '</p>' +
-        '</div>'
-      );
+      // Redirect ke dashboard (atau child app) dengan token
+      return redirectAfterLogin(token, redirectParam);
     }
 
     // === WHATSAPP OTP: SEND ===
     if (action === 'send_otp') {
-      // Guard: pastikan phone tidak kosong
       if (!phone || phone.trim() === '') {
-        return render('login', { phone: '', error: 'Nomor telepon harus diisi.' });
+        return render('login', { phone: '', error: 'Nomor telepon harus diisi.', redirect: redirectParam });
       }
 
       let cleanPhone = phone.replace(/\D/g, '');
@@ -121,26 +129,25 @@ function doPost(e) {
       const access = checkUserByPhone(cleanPhone);
 
       if (!access.found) {
-        return render('login', { phone: cleanPhone, error: 'Nomor ' + cleanPhone + ' belum terdaftar. Hubungi admin untuk mendapatkan akses.' });
+        return render('login', { phone: cleanPhone, error: 'Nomor ' + cleanPhone + ' belum terdaftar. Hubungi admin untuk mendapatkan akses.', redirect: redirectParam });
       }
       if (!access.allowed) {
-        return render('login', { phone: cleanPhone, error: 'Akun Anda dinonaktifkan. Hubungi admin.' });
+        return render('login', { phone: cleanPhone, error: 'Akun Anda dinonaktifkan. Hubungi admin.', redirect: redirectParam });
       }
 
       const result = sendOtp(cleanPhone);
 
       if (result.success) {
-        return render('verify', { phone: cleanPhone, error: '' });
+        return render('verify', { phone: cleanPhone, error: '', redirect: redirectParam });
       } else {
-        return render('login', { phone: cleanPhone, error: 'Gagal mengirim OTP: ' + result.message });
+        return render('login', { phone: cleanPhone, error: 'Gagal mengirim OTP: ' + result.message, redirect: redirectParam });
       }
     }
 
     // === WHATSAPP OTP: VERIFY ===
     if (action === 'verify_otp') {
-      // Guard: pastikan phone tidak kosong
       if (!phone || phone.trim() === '') {
-        return render('login', { phone: '', error: 'Sesi tidak valid. Silakan login ulang.' });
+        return render('login', { phone: '', error: 'Sesi tidak valid. Silakan login ulang.', redirect: redirectParam });
       }
 
       let cleanPhone = phone.replace(/\D/g, '');
@@ -152,44 +159,64 @@ function doPost(e) {
       const result = verifyOtp(cleanPhone, otp);
 
       if (result.success) {
-        // Ambil data user dari whitelist untuk session
         const userData = checkUserByPhone(cleanPhone);
 
-        const userProps = PropertiesService.getUserProperties();
-        const sessionData = {
-          phone: cleanPhone,
+        // Buat session di Sheet
+        const token = createSession({
           email: userData.found ? userData.email : '',
+          phone: cleanPhone,
           name: userData.found ? userData.name : cleanPhone,
           role: userData.found ? userData.role : 'user',
-          loginMethod: 'whatsapp_otp',
-          loginTime: new Date().toISOString(),
-          expiry: new Date(Date.now() + 3600000).toISOString()
-        };
-        userProps.setProperty('session', JSON.stringify(sessionData));
+          loginMethod: 'whatsapp_otp'
+        });
 
-        return HtmlService.createHtmlOutput(
-          '<div style="font-family:sans-serif;text-align:center;margin-top:50px;">' +
-          '<h2>Login Berhasil!</h2>' +
-          '<p>Selamat datang <b>' + escapeHtml(userData.found ? userData.name : cleanPhone) + '</b></p>' +
-          '<p style="color:#666;font-size:12px;">Login via WhatsApp OTP | ' + escapeHtml(cleanPhone) + '</p>' +
-          '</div>'
-        );
+        // Redirect ke dashboard (atau child app) dengan token
+        return redirectAfterLogin(token, redirectParam);
       } else {
-        return render('verify', { phone: cleanPhone, error: 'OTP Salah atau Kadaluwarsa.' });
+        return render('verify', { phone: cleanPhone, error: 'OTP Salah atau Kadaluwarsa.', redirect: redirectParam });
       }
     }
 
     // Action tidak dikenali
-    return render('login', { phone: '', error: 'Aksi tidak valid.' });
+    return render('login', { phone: '', error: 'Aksi tidak valid.', redirect: '' });
 
   } catch (err) {
     console.error('Error in doPost: ' + err.toString());
-    return render('login', { phone: phone, error: 'Terjadi kesalahan sistem internal.' });
+    return render('login', { phone: phone, error: 'Terjadi kesalahan sistem internal.', redirect: redirectParam });
   }
 }
 
 /**
- * Helper untuk merender file HTML dengan evaluasi scriptlet agar dinamis.
+ * Helper: Redirect ke dashboard atau child app setelah login berhasil.
+ * GAS webapp tidak bisa HTTP redirect, jadi gunakan JavaScript redirect.
+ * @param {string} token - Session token
+ * @param {string} redirectUrl - URL child app (opsional)
+ * @returns {HtmlService.HtmlOutput}
+ */
+function redirectAfterLogin(token, redirectUrl) {
+  const hubUrl = ScriptApp.getService().getUrl();
+  let targetUrl;
+  
+  if (redirectUrl) {
+    // Redirect ke child app dengan auth_token
+    targetUrl = buildAppUrl(redirectUrl, token);
+  } else {
+    // Redirect ke dashboard hub
+    targetUrl = hubUrl + '?token=' + encodeURIComponent(token);
+  }
+  
+  return HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
+    '<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f9fafb;}</style>' +
+    '</head><body><div style="text-align:center;">' +
+    '<p style="color:#666;">Mengalihkan...</p>' +
+    '<script>window.top.location.href="' + targetUrl + '";</script>' +
+    '</div></body></html>'
+  ).setTitle('Redirecting...');
+}
+
+/**
+ * Helper untuk merender file HTML dengan evaluasi scriptlet.
  * @param {string} filename - Nama file HTML (tanpa ekstensi).
  * @param {Object} args - Objek data untuk dipassing ke template HTML.
  * @returns {HtmlService.HtmlOutput}
@@ -198,9 +225,12 @@ function render(filename, args = {}) {
   try {
     const template = HtmlService.createTemplateFromFile(filename);
 
-    // Default values pencegah crash jika ada variabel yang lupa dikirim
+    // Default values pencegah crash
     template.error = '';
     template.phone = '';
+    template.redirect = '';
+    template.sessionData = {};
+    template.apps = [];
 
     // Assign properti dari args ke template
     Object.keys(args).forEach(key => {
@@ -218,8 +248,7 @@ function render(filename, args = {}) {
 }
 
 /**
- * Helper untuk menyisipkan konten file lain ke dalam HTML (untuk CSS atau JS eksternal).
- * Digunakan dengan syntax <?!= include('filename'); ?>
+ * Helper untuk menyisipkan konten file lain ke dalam HTML.
  * @param {string} filename - Nama file.
  * @returns {string} Konten file.
  */
