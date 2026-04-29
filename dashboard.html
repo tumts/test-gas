@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body { background-color: #f9fafb; }
+    </style>
+  </head>
+  <body class="min-h-screen p-4 font-sans">
+    <div class="max-w-2xl mx-auto">
+      
+      <!-- Header -->
+      <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-xl font-extrabold text-gray-900">Auth Hub</h1>
+            <p class="text-sm text-gray-500 mt-1">
+              Selamat datang, <span class="font-semibold text-gray-800"><?= sessionData.name ?></span>
+            </p>
+            <p class="text-xs text-gray-400 mt-0.5">
+              <?= sessionData.email || sessionData.phone ?> &middot; <?= sessionData.loginMethod ?> &middot; <?= sessionData.role ?>
+            </p>
+          </div>
+          <form action="<?= ScriptApp.getService().getUrl() ?>" method="POST" style="display:inline;">
+            <input type="hidden" name="action" value="logout">
+            <input type="hidden" name="token" value="<?= sessionData.token ?>">
+            <input type="hidden" name="phone" value="">
+            <button type="submit"
+                    class="text-sm text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition-colors">
+              Logout
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- App Grid -->
+      <div class="mb-4">
+        <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Aplikasi Tersedia</h2>
+      </div>
+
+      <? if (apps.length === 0) { ?>
+        <div class="bg-white rounded-2xl shadow p-8 text-center border border-gray-100">
+          <p class="text-gray-400 text-sm">Belum ada aplikasi yang terdaftar.</p>
+          <p class="text-gray-400 text-xs mt-1">Hubungi admin untuk menambahkan aplikasi ke hub.</p>
+        </div>
+      <? } else { ?>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <? for (let i = 0; i < apps.length; i++) { ?>
+            <a href="<?= apps[i].url ?>" 
+               class="bg-white rounded-2xl shadow hover:shadow-lg p-5 border border-gray-100 hover:border-blue-200 transition-all block group">
+              <div class="flex items-start gap-3">
+                <span class="text-2xl"><?= apps[i].icon || '📱' ?></span>
+                <div>
+                  <h3 class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors"><?= apps[i].name ?></h3>
+                  <p class="text-xs text-gray-500 mt-1"><?= apps[i].description ?></p>
+                </div>
+              </div>
+            </a>
+          <? } ?>
+        </div>
+      <? } ?>
+
+      <!-- Footer -->
+      <div class="mt-8 text-center">
+        <p class="text-xs text-gray-400">&copy; 2026 Auth Hub</p>
+      </div>
+    </div>
+  </body>
+</html>

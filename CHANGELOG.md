@@ -2,7 +2,28 @@
 
 ## **Unreleased**
 
-### **Added**
+### **Added — Fase 2: Centralized Session Store**
+
+* **Session Store (Google Sheet)**: Mengganti `UserProperties` dengan Google Sheet tab `sessions` sebagai penyimpanan session terpusat. File baru: `Session.gs`. Session kini bisa diakses oleh child apps melalui Sheet yang sama.
+* **Session Token**: Setiap login menghasilkan token unik (SHA-256 hash dari UUID) yang digunakan sebagai identifier session di URL parameter.
+* **Session Cleanup**: Fungsi `cleanExpiredSessions()` untuk membersihkan session expired dari Sheet (bisa dipanggil via time-driven trigger).
+
+### **Added — Fase 3: Hub Dashboard & App Registry**
+
+* **Dashboard Hub**: Halaman dashboard (`dashboard.html`) menampilkan daftar aplikasi dalam card grid setelah login berhasil.
+* **App Registry**: Daftar aplikasi dibaca dari Google Sheet tab `apps`. File baru: `AppRegistry.gs`. Admin bisa menambah/menghapus app langsung di Sheet.
+* **Role-based App Access**: Aplikasi ditampilkan berdasarkan role user (`admin` bisa akses semua, `user` hanya app dengan `requiredRole=user`).
+* **Logout**: Tombol logout di dashboard yang menginvalidasi session di Sheet.
+* **Child App Redirect Flow**: Support parameter `?redirect=URL` agar child app bisa redirect ke hub untuk login, lalu kembali ke child app dengan token.
+
+### **Changed**
+
+* **Session Storage**: Migrasi dari `UserProperties` (terisolasi per-script) ke Google Sheet (bisa diakses lintas project).
+* **Login Flow**: Setelah login berhasil, user di-redirect ke dashboard (bukan halaman statis "Login Berhasil").
+* **URL Token**: Session diidentifikasi via `?token=xxx` di URL, bukan via `UserProperties`.
+* **render() defaults**: Menambahkan default values untuk `redirect`, `sessionData`, dan `apps` di fungsi render.
+
+### **Added — Fase 1.5**
 
 * **Login Google (GIS)**: Menambahkan opsi login menggunakan akun Google via Google Identity Services. File baru: `GoogleAuth.gs`.
 * **Whitelist User**: Menambahkan sistem whitelist user berbasis Google Sheet untuk kontrol akses. File baru: `UserWhitelist.gs`. Hanya email/nomor yang terdaftar dan berstatus `active` yang bisa login.
