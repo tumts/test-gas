@@ -260,7 +260,8 @@ function isAllowedRedirect(url) {
     
     for (let i = 1; i < data.length; i++) {
       const appUrl = data[i][2].toString().trim();
-      if (appUrl && (url === appUrl || url.startsWith(appUrl + '/') || url.startsWith(appUrl + '?') || url.startsWith(appUrl + '#'))) {
+      const normalizedAppUrl = appUrl.endsWith('/') ? appUrl.slice(0, -1) : appUrl;
+      if (appUrl && (url === appUrl || url === normalizedAppUrl || url.startsWith(normalizedAppUrl + '/') || url.startsWith(normalizedAppUrl + '?') || url.startsWith(normalizedAppUrl + '#'))) {
         return true;
       }
     }
