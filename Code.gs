@@ -75,8 +75,14 @@ function doPost(e) {
     if (action === 'logout') {
       const token = e.parameter.token || '';
       if (token) {
+        const session = validateSession(token);
         deleteSession(token);
-        logAuditEvent('LOGOUT', { detail: 'User logout via dashboard' });
+        logAuditEvent('LOGOUT', {
+          email: session.email || '',
+          phone: session.phone || '',
+          method: session.loginMethod || '',
+          detail: 'User logout via dashboard'
+        });
       }
       return render('login', { phone: '', error: '', redirect: '' });
     }
@@ -98,6 +104,7 @@ function doPost(e) {
         return render('login', { phone: '', error: 'Email ' + googleResult.email + ' belum terdaftar. Hubungi admin untuk mendapatkan akses.', redirect: redirectParam });
       }
       if (!access.allowed) {
+        logAuditEvent('LOGIN_FAILED', { email: googleResult.email, method: 'google', detail: 'Akun dinonaktifkan' });
         return render('login', { phone: '', error: 'Akun Anda dinonaktifkan. Hubungi admin.', redirect: redirectParam });
       }
 
@@ -135,6 +142,7 @@ function doPost(e) {
         return render('login', { phone: cleanPhone, error: 'Nomor ' + cleanPhone + ' belum terdaftar. Hubungi admin untuk mendapatkan akses.', redirect: redirectParam });
       }
       if (!access.allowed) {
+        logAuditEvent('LOGIN_FAILED', { phone: cleanPhone, method: 'whatsapp_otp', detail: 'Akun dinonaktifkan' });
         return render('login', { phone: cleanPhone, error: 'Akun Anda dinonaktifkan. Hubungi admin.', redirect: redirectParam });
       }
 
