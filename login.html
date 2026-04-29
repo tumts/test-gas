@@ -5,7 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
+    <? var gClientId = getGoogleClientIdSafe(); ?>
+    <? if (gClientId) { ?>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <? } ?>
     <style>
       body { background-color: #f9fafb; }
     </style>
@@ -24,10 +27,11 @@
         </div>
       <? } ?>
 
+      <? if (gClientId) { ?>
       <!-- Google Sign-In Button -->
       <div id="googleBtnContainer" class="flex justify-center mb-4">
         <div id="g_id_onload"
-             data-client_id="<?= getGoogleClientId() ?>"
+             data-client_id="<?= gClientId ?>"
              data-callback="handleGoogleLogin"
              data-auto_prompt="false">
         </div>
@@ -57,6 +61,7 @@
         <span class="px-3 text-xs text-gray-400 uppercase tracking-wider">atau</span>
         <hr class="flex-grow border-gray-200">
       </div>
+      <? } ?>
 
       <!-- WhatsApp OTP Form -->
       <form action="<?= ScriptApp.getService().getUrl() ?>" method="POST" id="loginForm">
@@ -87,6 +92,7 @@
     </div>
 
     <script>
+      <? if (gClientId) { ?>
       function handleGoogleLogin(response) {
         document.getElementById('googleBtnContainer').classList.add('hidden');
         document.getElementById('googleLoading').classList.remove('hidden');
@@ -122,6 +128,7 @@
         document.body.appendChild(form);
         form.submit();
       }
+      <? } ?>
 
       document.getElementById('loginForm').addEventListener('submit', function() {
         var btn = this.querySelector('button[type="submit"]');

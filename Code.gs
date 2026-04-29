@@ -18,12 +18,10 @@ function doGet(e) {
     const session = validateSession(token);
     
     if (session.valid) {
-      // Jika ada redirect URL (dari child app), redirect ke sana dengan token
-      if (redirectUrl) {
+      // Jika ada redirect URL (dari child app), validasi dan redirect ke sana dengan token
+      if (redirectUrl && isAllowedRedirect(redirectUrl)) {
         const targetUrl = buildAppUrl(redirectUrl, token);
-        return HtmlService.createHtmlOutput(
-          '<script>window.top.location.href="' + targetUrl + '";</script>'
-        ).setTitle('Redirecting...');
+        return buildRedirectPage(targetUrl);
       }
       
       // Render dashboard
@@ -197,7 +195,7 @@ function redirectAfterLogin(token, redirectUrl) {
   const hubUrl = ScriptApp.getService().getUrl();
   let targetUrl;
   
-  if (redirectUrl) {
+  if (redirectUrl && isAllowedRedirect(redirectUrl)) {
     // Redirect ke child app dengan auth_token
     targetUrl = buildAppUrl(redirectUrl, token);
   } else {
@@ -205,14 +203,76 @@ function redirectAfterLogin(token, redirectUrl) {
     targetUrl = hubUrl + '?token=' + encodeURIComponent(token);
   }
   
+  return buildRedirectPage(targetUrl);
+}
+
+/**
+ * Helper: Bangun halaman redirect dengan URL yang di-escape untuk mencegah XSS.
+ * @param {string} url - Target URL (sudah divalidasi)
+ * @returns {HtmlService.HtmlOutput}
+ */
+function buildRedirectPage(url) {
+  const safeUrl = escapeJsString(url);
   return HtmlService.createHtmlOutput(
     '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f9fafb;}</style>' +
     '</head><body><div style="text-align:center;">' +
     '<p style="color:#666;">Mengalihkan...</p>' +
-    '<script>window.top.location.href="' + targetUrl + '";</script>' +
+    '<script>window.top.location.href="' + safeUrl + '";</script>' +
     '</div></body></html>'
   ).setTitle('Redirecting...');
+}
+
+/**
+ * Escape string untuk embedding aman di JavaScript string literal.
+ * Mencegah XSS via injection di tag <script>.
+ * @param {string} str - String yang akan di-escape
+ * @returns {string} Escaped string
+ */
+function escapeJsString(str) {
+  if (!str) return '';
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/'/g, "\\'") 
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r');
+}
+
+/**
+ * Validasi redirect URL terhadap daftar app yang terdaftar di registry.
+ * Mencegah open redirect ke domain arbitrary.
+ * @param {string} url - URL redirect yang akan divalidasi
+ * @returns {boolean} true jika URL diizinkan
+ */
+function isAllowedRedirect(url) {
+  if (!url) return false;
+  
+  try {
+    // Hanya izinkan https:// URLs
+    if (!url.startsWith('https://')) return false;
+    
+    // Cek apakah URL cocok dengan salah satu registered app URL
+    const sheet = getAppsSheet();
+    const data = sheet.getDataRange().getValues();
+    
+    for (let i = 1; i < data.length; i++) {
+      const appUrl = data[i][2].toString().trim();
+      if (appUrl && url.startsWith(appUrl)) {
+        return true;
+      }
+    }
+    
+    // Izinkan redirect ke script.google.com (GAS webapp)
+    if (url.startsWith('https://script.google.com/')) return true;
+    
+    return false;
+  } catch (e) {
+    console.error('isAllowedRedirect error: ' + e.message);
+    return false;
+  }
 }
 
 /**
