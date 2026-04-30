@@ -267,7 +267,7 @@ function redirectAfterLogin(token, redirectUrl) {
  * @returns {HtmlService.HtmlOutput}
  */
 function buildRedirectPage(url) {
-  const safeUrl = escapeJsString(url);
+  const safeUrl = escapeHtmlAttr(url);
   return HtmlService.createHtmlOutput(
     '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
     '<base target="_top">' +
@@ -286,6 +286,22 @@ function buildRedirectPage(url) {
     '<a href="' + safeUrl + '" class="btn" target="_top">Masuk ke Dashboard &rarr;</a>' +
     '</div></body></html>'
   ).setTitle('Login Berhasil');
+}
+
+/**
+ * Escape string untuk embedding aman di HTML attribute value.
+ * Mencegah XSS via injection di attribute seperti href, src, dll.
+ * @param {string} str - String yang akan di-escape
+ * @returns {string} Escaped string aman untuk HTML attribute
+ */
+function escapeHtmlAttr(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/\"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 /**

@@ -193,6 +193,48 @@ function testSuite_Code() {
     });
   });
   
+  describe('Code — escapeHtmlAttr()', function() {
+    
+    it('should escape double quotes to &quot;', function() {
+      var result = escapeHtmlAttr('test"value');
+      assert.contains(result, '&quot;', 'Should escape double quotes to &quot;');
+      assert.isFalse(result.indexOf('"') > -1, 'Should not contain raw " character');
+    });
+    
+    it('should escape ampersands to &amp;', function() {
+      var result = escapeHtmlAttr('a&b');
+      assert.contains(result, '&amp;', 'Should escape & to &amp;');
+    });
+    
+    it('should escape single quotes to &#39;', function() {
+      var result = escapeHtmlAttr("test'value");
+      assert.contains(result, '&#39;', 'Should escape single quotes');
+    });
+    
+    it('should escape angle brackets', function() {
+      var result = escapeHtmlAttr('<script>alert(1)</script>');
+      assert.isFalse(result.indexOf('<') > -1, 'Should not contain raw < character');
+      assert.contains(result, '&lt;', 'Should escape < to &lt;');
+      assert.contains(result, '&gt;', 'Should escape > to &gt;');
+    });
+    
+    it('should handle empty string', function() {
+      var result = escapeHtmlAttr('');
+      assert.equal(result, '', 'Empty string should return empty');
+    });
+    
+    it('should handle null/undefined', function() {
+      var result = escapeHtmlAttr(null);
+      assert.equal(result, '', 'Null should return empty string');
+    });
+    
+    it('should prevent attribute breakout with crafted URL', function() {
+      var malicious = 'https://example.com/path/"onmouseover=alert(1) x="';
+      var result = escapeHtmlAttr(malicious);
+      assert.isFalse(result.indexOf('"') > -1, 'Should not contain raw " that could break attribute');
+    });
+  });
+
   describe('Code — escapeJsString()', function() {
     
     it('should escape double quotes', function() {
