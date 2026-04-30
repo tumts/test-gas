@@ -25,8 +25,11 @@ function doGet(e) {
       }
       
       // Render dashboard
-      const userAccess = checkUserByEmail(session.email) || {};
-      const apps = getRegisteredApps(session.role, userAccess.apps || '');
+      let userAccess = checkUserByEmail(session.email);
+      if (!userAccess.found && session.phone) {
+        userAccess = checkUserByPhone(session.phone);
+      }
+      const apps = getRegisteredApps(session.role, (userAccess && userAccess.apps) || '');
       // Build app URLs dengan token
       const appsWithToken = apps.map(function(app) {
         return {
