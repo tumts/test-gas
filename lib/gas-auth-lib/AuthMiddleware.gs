@@ -133,6 +133,7 @@ function _buildHubLoginUrl(e) {
 function hasRole(authResult, requiredRole) {
   if (!authResult || !authResult.authenticated) return false;
   if (authResult.role && authResult.role.trim().toLowerCase() === 'admin') return true; // Admin bisa semua
+  if (!authResult.role) return false;
   // Support comma-separated roles (e.g., "guru,kepsek")
   var userRoles = authResult.role.split(',').map(function(r) { return r.trim().toLowerCase(); });
   var requiredRoles = requiredRole.split(',').map(function(r) { return r.trim().toLowerCase(); });

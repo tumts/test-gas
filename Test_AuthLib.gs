@@ -22,6 +22,7 @@ function _authLib_escapeHtmlAttr(str) {
 function _authLib_hasRole(authResult, requiredRole) {
   if (!authResult || !authResult.authenticated) return false;
   if (authResult.role && authResult.role.trim().toLowerCase() === 'admin') return true;
+  if (!authResult.role) return false;
   var userRoles = authResult.role.split(',').map(function(r) { return r.trim().toLowerCase(); });
   var requiredRoles = requiredRole.split(',').map(function(r) { return r.trim().toLowerCase(); });
   for (var i = 0; i < requiredRoles.length; i++) {
@@ -130,6 +131,13 @@ function testSuite_AuthLib() {
     it('should return false for null authResult', function() {
       assert.isFalse(_authLib_hasRole(null, 'guru'), 'null auth should return false');
       assert.isFalse(_authLib_hasRole(undefined, 'guru'), 'undefined auth should return false');
+    });
+
+    it('should return false when role is null or undefined', function() {
+      var authNull = { authenticated: true, role: null };
+      assert.isFalse(_authLib_hasRole(authNull, 'guru'), 'null role should return false');
+      var authUndef = { authenticated: true, role: undefined };
+      assert.isFalse(_authLib_hasRole(authUndef, 'guru'), 'undefined role should return false');
     });
 
     it('should return false for unauthenticated result', function() {
