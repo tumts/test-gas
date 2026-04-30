@@ -47,7 +47,7 @@ function setupProductionSheet() {
   // 2. Setup tab 'users'
   var usersSheet = spreadsheet.getActiveSheet();
   usersSheet.setName('users');
-  usersSheet.appendRow(['email', 'phone', 'nama', 'role', 'status', 'ditambahkan_oleh', 'tanggal']);
+  usersSheet.appendRow(['email', 'phone', 'nama', 'role', 'status', 'ditambahkan_oleh', 'tanggal', 'kelas', 'apps']);
   usersSheet.setFrozenRows(1);
   // Insert admin default
   usersSheet.appendRow([
@@ -57,22 +57,24 @@ function setupProductionSheet() {
     'admin',
     'active',
     'system_setup',
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split('T')[0],
+    '',
+    ''
   ]);
   // Format header
-  usersSheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#f3f4f6');
+  usersSheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#f3f4f6');
   Logger.log('✅ Tab "users" dibuat dengan admin default.');
   
   // 3. Setup tab 'sessions'
   var sessionsSheet = spreadsheet.insertSheet('sessions');
-  sessionsSheet.appendRow(['token', 'email', 'phone', 'name', 'role', 'loginMethod', 'createdAt', 'expiresAt', 'status']);
+  sessionsSheet.appendRow(['token', 'email', 'phone', 'name', 'role', 'loginMethod', 'createdAt', 'expiresAt', 'status', 'kelas']);
   sessionsSheet.setFrozenRows(1);
-  sessionsSheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#f3f4f6');
+  sessionsSheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#f3f4f6');
   Logger.log('✅ Tab "sessions" dibuat.');
   
   // 4. Setup tab 'apps'
   var appsSheet = spreadsheet.insertSheet('apps');
-  appsSheet.appendRow(['id', 'name', 'url', 'icon', 'description', 'requiredRole', 'status']);
+  appsSheet.appendRow(['id', 'name', 'url', 'icon', 'description', 'allowedRoles', 'status', 'category']);
   appsSheet.setFrozenRows(1);
   // Insert placeholder hub entry
   appsSheet.appendRow([
@@ -81,8 +83,9 @@ function setupProductionSheet() {
     '',
     '🏠',
     'Halaman utama hub (tidak perlu URL)',
-    'user',
-    'active'
+    'admin,guru,siswa,orangtua,kepsek',
+    'active',
+    'umum'
   ]);
   // Insert contoh child app
   appsSheet.appendRow([
@@ -91,10 +94,11 @@ function setupProductionSheet() {
     'https://script.google.com/macros/s/DEPLOY_ID_DISINI/exec',
     '📦',
     'Ganti URL dengan deployment ID aplikasi Anda',
-    'user',
-    'inactive'
+    'guru,admin',
+    'inactive',
+    'akademik'
   ]);
-  appsSheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#f3f4f6');
+  appsSheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#f3f4f6');
   Logger.log('✅ Tab "apps" dibuat dengan contoh data.');
   
   // 5. Setup tab 'audit_log'
@@ -149,28 +153,34 @@ function setupTestSheet() {
   // 2. Setup tab 'users' dengan test data
   var usersSheet = spreadsheet.getActiveSheet();
   usersSheet.setName('users');
-  usersSheet.appendRow(['email', 'phone', 'nama', 'role', 'status', 'ditambahkan_oleh', 'tanggal']);
+  usersSheet.appendRow(['email', 'phone', 'nama', 'role', 'status', 'ditambahkan_oleh', 'tanggal', 'kelas', 'apps']);
   usersSheet.setFrozenRows(1);
   // Test users
-  usersSheet.appendRow(['testadmin@example.com', '6280000000001', 'Test Admin', 'admin', 'active', 'system', '2026-01-01']);
-  usersSheet.appendRow(['testuser@example.com', '6280000000002', 'Test User', 'user', 'active', 'system', '2026-01-01']);
-  usersSheet.appendRow(['inactive@example.com', '6280000000003', 'Inactive User', 'user', 'inactive', 'system', '2026-01-01']);
-  Logger.log('✅ Tab "users" dibuat dengan 3 test users.');
+  usersSheet.appendRow(['testadmin@example.com', '6280000000001', 'Test Admin', 'admin', 'active', 'system', '2026-01-01', '', '']);
+  usersSheet.appendRow(['testuser@example.com', '6280000000002', 'Test User', 'guru', 'active', 'system', '2026-01-01', '', '']);
+  usersSheet.appendRow(['inactive@example.com', '6280000000003', 'Inactive User', 'siswa', 'inactive', 'system', '2026-01-01', '7A', '']);
+  usersSheet.appendRow(['guru@example.com', '6280000000004', 'Guru Test', 'guru', 'active', 'system', '2026-01-01', '', '']);
+  usersSheet.appendRow(['siswa@example.com', '6280000000005', 'Siswa Test', 'siswa', 'active', 'system', '2026-01-01', '7A', '']);
+  usersSheet.appendRow(['ortu@example.com', '6280000000006', 'Ortu Test', 'orangtua', 'active', 'system', '2026-01-01', '', 'app1,app3']);
+  Logger.log('✅ Tab "users" dibuat dengan 6 test users.');
   
   // 3. Setup tab 'sessions'
   var sessionsSheet = spreadsheet.insertSheet('sessions');
-  sessionsSheet.appendRow(['token', 'email', 'phone', 'name', 'role', 'loginMethod', 'createdAt', 'expiresAt', 'status']);
+  sessionsSheet.appendRow(['token', 'email', 'phone', 'name', 'role', 'loginMethod', 'createdAt', 'expiresAt', 'status', 'kelas']);
   sessionsSheet.setFrozenRows(1);
   Logger.log('✅ Tab "sessions" dibuat.');
   
   // 4. Setup tab 'apps'
   var appsSheet = spreadsheet.insertSheet('apps');
-  appsSheet.appendRow(['id', 'name', 'url', 'icon', 'description', 'requiredRole', 'status']);
+  appsSheet.appendRow(['id', 'name', 'url', 'icon', 'description', 'allowedRoles', 'status', 'category']);
   appsSheet.setFrozenRows(1);
-  appsSheet.appendRow(['test-app-1', 'Test App 1', 'https://example.com/app1', '🧪', 'Aplikasi test 1', 'user', 'active']);
-  appsSheet.appendRow(['test-app-2', 'Test App Admin', 'https://example.com/app2', '🔧', 'Aplikasi test admin only', 'admin', 'active']);
-  appsSheet.appendRow(['test-app-inactive', 'Inactive App', 'https://example.com/app3', '❌', 'Aplikasi nonaktif', 'user', 'inactive']);
-  Logger.log('✅ Tab "apps" dibuat dengan 3 test apps.');
+  appsSheet.appendRow(['test-app-1', 'Test App 1', 'https://example.com/app1', '🧪', 'Aplikasi test 1', 'guru,siswa,admin', 'active', 'akademik']);
+  appsSheet.appendRow(['test-app-2', 'Test App Admin', 'https://example.com/app2', '🔧', 'Aplikasi test admin only', 'admin', 'active', 'admin']);
+  appsSheet.appendRow(['test-app-inactive', 'Inactive App', 'https://example.com/app3', '❌', 'Aplikasi nonaktif', 'guru', 'inactive', 'akademik']);
+  appsSheet.appendRow(['app-guru', 'App Guru', 'https://example.com/guru', '📚', 'Untuk guru', 'guru,kepsek,admin', 'active', 'akademik']);
+  appsSheet.appendRow(['app-siswa', 'App Siswa', 'https://example.com/siswa', '🎓', 'Untuk siswa', 'siswa,guru,admin', 'active', 'akademik']);
+  appsSheet.appendRow(['app-ortu', 'App Ortu', 'https://example.com/ortu', '👨‍👩‍👧', 'Untuk orangtua', 'orangtua,admin', 'active', 'umum']);
+  Logger.log('✅ Tab "apps" dibuat dengan 6 test apps.');
   
   // 5. Setup tab 'audit_log'
   var auditSheet = spreadsheet.insertSheet('audit_log');

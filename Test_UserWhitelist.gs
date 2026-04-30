@@ -55,6 +55,23 @@ function testSuite_UserWhitelist() {
       var result = checkUserByEmail('');
       assert.isFalse(result.found, 'Empty email should not be found');
     });
+    
+    it('should return kelas field for siswa', function() {
+      var result = checkUserByEmail('siswa@test.com');
+      assert.isTrue(result.found, 'Should find siswa');
+      assert.equal(result.kelas, '7B', 'Kelas should be 7B');
+    });
+    
+    it('should return apps override field', function() {
+      var result = checkUserByEmail('ortu@test.com');
+      assert.isTrue(result.found, 'Should find ortu');
+      assert.equal(result.apps, 'app1,app2', 'Apps override should match');
+    });
+    
+    it('should return empty kelas for non-siswa roles', function() {
+      var result = checkUserByEmail('admin@test.com');
+      assert.equal(result.kelas, '', 'Admin should have empty kelas');
+    });
   });
   
   describe('UserWhitelist — checkUserByPhone()', function() {
@@ -93,6 +110,19 @@ function testSuite_UserWhitelist() {
     it('should strip non-digit characters from input', function() {
       var result = checkUserByPhone('+62-811-1111-1111');
       assert.isTrue(result.found, 'Should find phone after stripping non-digits');
+    });
+    
+    it('should return kelas and apps fields by phone', function() {
+      var result = checkUserByPhone('6285555555555');
+      assert.isTrue(result.found, 'Should find siswa by phone');
+      assert.equal(result.kelas, '7B', 'Kelas should be 7B');
+      assert.equal(result.apps, '', 'Apps should be empty for siswa');
+    });
+    
+    it('should return apps override by phone', function() {
+      var result = checkUserByPhone('6286666666666');
+      assert.isTrue(result.found, 'Should find ortu by phone');
+      assert.equal(result.apps, 'app1,app2', 'Apps override should match');
     });
   });
 }

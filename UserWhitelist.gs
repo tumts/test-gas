@@ -2,7 +2,7 @@
  * @file UserWhitelist.gs
  * @description Modul pengecekan whitelist user dari Google Sheet.
  * Sheet harus memiliki sheet bernama 'users' dengan kolom:
- * A: email | B: phone | C: nama | D: role | E: status | F: ditambahkan_oleh | G: tanggal
+ * A: email | B: phone | C: nama | D: role | E: status | F: ditambahkan_oleh | G: tanggal | H: kelas | I: apps
  */
 
 /**
@@ -37,7 +37,9 @@ function checkUserByEmail(email) {
           name: data[i][2].toString().trim(),
           role: data[i][3].toString().trim(),
           status: data[i][4].toString().trim(),
-          allowed: data[i][4].toString().trim().toLowerCase() === 'active'
+          allowed: data[i][4].toString().trim().toLowerCase() === 'active',
+          kelas: (data[i][7] || '').toString().trim(),
+          apps: (data[i][8] || '').toString().trim()
         };
       }
     }
@@ -72,7 +74,9 @@ function checkUserByPhone(phone) {
           name: data[i][2].toString().trim(),
           role: data[i][3].toString().trim(),
           status: data[i][4].toString().trim(),
-          allowed: data[i][4].toString().trim().toLowerCase() === 'active'
+          allowed: data[i][4].toString().trim().toLowerCase() === 'active',
+          kelas: (data[i][7] || '').toString().trim(),
+          apps: (data[i][8] || '').toString().trim()
         };
       }
     }

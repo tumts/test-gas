@@ -4,7 +4,7 @@
  * Menggunakan Sheet yang sama dengan whitelist user (USERS_SHEET_ID), tab 'sessions'.
  * 
  * Kolom Sheet 'sessions':
- * A: token | B: email | C: phone | D: name | E: role | F: loginMethod | G: createdAt | H: expiresAt | I: status
+ * A: token | B: email | C: phone | D: name | E: role | F: loginMethod | G: createdAt | H: expiresAt | I: status | J: kelas
  */
 
 const SESSION_DURATION_MS = 3600000; // 1 jam
@@ -20,7 +20,7 @@ function getSessionsSheet() {
   
   if (!sheet) {
     sheet = spreadsheet.insertSheet('sessions');
-    sheet.appendRow(['token', 'email', 'phone', 'name', 'role', 'loginMethod', 'createdAt', 'expiresAt', 'status']);
+    sheet.appendRow(['token', 'email', 'phone', 'name', 'role', 'loginMethod', 'createdAt', 'expiresAt', 'status', 'kelas']);
     sheet.setFrozenRows(1);
   }
   
@@ -47,7 +47,8 @@ function createSession(userData) {
     userData.loginMethod || 'unknown',
     now,
     expiresAt,
-    'active'
+    'active',
+    userData.kelas || ''
   ]);
   
   return token;
@@ -85,7 +86,8 @@ function validateSession(token) {
           role: data[i][4],
           loginMethod: data[i][5],
           createdAt: data[i][6],
-          expiresAt: expiresAt
+          expiresAt: expiresAt,
+          kelas: data[i][9] || ''
         };
       }
     }

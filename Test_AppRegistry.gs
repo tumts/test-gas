@@ -40,7 +40,7 @@ function testSuite_AppRegistry() {
     });
     
     it('should return array', function() {
-      var apps = getRegisteredApps('user');
+      var apps = getRegisteredApps('guru');
       assert.isTrue(Array.isArray(apps), 'Should return array');
     });
     
@@ -58,20 +58,14 @@ function testSuite_AppRegistry() {
     
     it('should show all active apps for admin role', function() {
       var apps = getRegisteredApps('admin');
-      assert.isTrue(apps.length >= 2, 'Admin should see at least 2 apps (user + admin)');
+      assert.isTrue(apps.length >= 2, 'Admin should see at least 2 apps');
       
       var adminApp = apps.filter(function(a) { return a.id === 'app2'; });
       assert.lengthOf(adminApp, 1, 'Admin should see admin-only app');
     });
     
-    it('should only show user-level apps for user role', function() {
-      var apps = getRegisteredApps('user');
-      var adminApps = apps.filter(function(a) { return a.requiredRole === 'admin'; });
-      assert.lengthOf(adminApps, 0, 'User should NOT see admin-only apps');
-    });
-    
     it('should return app objects with correct structure', function() {
-      var apps = getRegisteredApps('user');
+      var apps = getRegisteredApps('guru');
       if (apps.length > 0) {
         var app = apps[0];
         assert.isTrue('id' in app, 'Should have id');
@@ -79,9 +73,80 @@ function testSuite_AppRegistry() {
         assert.isTrue('url' in app, 'Should have url');
         assert.isTrue('icon' in app, 'Should have icon');
         assert.isTrue('description' in app, 'Should have description');
-        assert.isTrue('requiredRole' in app, 'Should have requiredRole');
+        assert.isTrue('allowedRoles' in app, 'Should have allowedRoles');
         assert.isTrue('status' in app, 'Should have status');
+        assert.isTrue('category' in app, 'Should have category');
       }
+    });
+    
+    it('should filter apps by comma-separated allowedRoles', function() {
+      var apps = getRegisteredApps('guru');
+      var guruApp = apps.filter(function(a) { return a.id === 'app1'; });
+      assert.lengthOf(guruApp, 1, 'Guru should see app1 (allowedRoles includes guru)');
+    });
+    
+    it('should allow guru to access guru+kepsek apps', function() {
+      var apps = getRegisteredApps('guru');
+      var app1 = apps.filter(function(a) { return a.id === 'app1'; });
+      assert.lengthOf(app1, 1, 'Guru should access app1 (guru,kepsek,admin)');
+    });
+    
+    it('should NOT allow siswa to access guru-only apps', function() {
+      var apps = getRegisteredApps('siswa');
+      var adminApp = apps.filter(function(a) { return a.id === 'app2'; });
+      assert.lengthOf(adminApp, 0, 'Siswa should NOT see admin-only app');
+      var guruApp = apps.filter(function(a) { return a.id === 'app1'; });
+      assert.lengthOf(guruApp, 0, 'Siswa should NOT see guru-only app (app1)');
+    });
+    
+    it('should allow user with apps override to access specific apps', function() {
+      var apps = getRegisteredApps('orangtua', 'app1,app2');
+      var app1 = apps.filter(function(a) { return a.id === 'app1'; });
+      var app2 = apps.filter(function(a) { return a.id === 'app2'; });
+      assert.lengthOf(app1, 1, 'Override should grant access to app1');
+      assert.lengthOf(app2, 1, 'Override should grant access to app2');
+    });
+    
+    it('should return category field', function() {
+      var apps = getRegisteredApps('admin');
+      var app1 = apps.filter(function(a) { return a.id === 'app1'; })[0];
+      assert.equal(app1.category, 'akademik', 'App1 category should be akademik');
+    });
+    
+    it('should default category to umum if empty', function() {
+      var apps = getRegisteredApps('admin');
+      for (var i = 0; i < apps.length; i++) {
+        assert.isTruthy(apps[i].category, 'Category should never be empty');
+      }
+    });
+  });
+  
+  describe('AppRegistry — getUniqueCategories()', function() {
+    
+    it('should return sorted unique categories', function() {
+      var apps = [
+        { category: 'akademik' },
+        { category: 'umum' },
+        { category: 'akademik' },
+        { category: 'admin' }
+      ];
+      var cats = getUniqueCategories(apps);
+      assert.lengthOf(cats, 3, 'Should have 3 unique categories');
+      assert.equal(cats[0], 'admin', 'First should be admin (sorted)');
+      assert.equal(cats[1], 'akademik', 'Second should be akademik');
+      assert.equal(cats[2], 'umum', 'Third should be umum');
+    });
+    
+    it('should default to umum for apps without category', function() {
+      var apps = [{ category: '' }, { category: undefined }];
+      var cats = getUniqueCategories(apps);
+      assert.lengthOf(cats, 1, 'Should have 1 category');
+      assert.equal(cats[0], 'umum', 'Default category should be umum');
+    });
+    
+    it('should return empty array for empty apps', function() {
+      var cats = getUniqueCategories([]);
+      assert.lengthOf(cats, 0, 'Should return empty array');
     });
   });
 }
