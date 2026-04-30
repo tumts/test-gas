@@ -39,6 +39,36 @@ function doGet(e) {
         };
       });
       
+      // Render admin page jika diminta dan user adalah admin
+      if (e.parameter.page === 'admin' && session.role === 'admin') {
+        return render('admin', {
+          sessionData: {
+            token: token,
+            email: session.email,
+            phone: session.phone,
+            name: session.name,
+            role: session.role,
+            kelas: session.kelas || '',
+            loginMethod: session.loginMethod
+          }
+        });
+      }
+
+      // Render profile page
+      if (e.parameter.page === 'profile') {
+        return render('profile', {
+          sessionData: {
+            token: token,
+            email: session.email,
+            phone: session.phone,
+            name: session.name,
+            role: session.role,
+            kelas: session.kelas || '',
+            loginMethod: session.loginMethod
+          }
+        });
+      }
+
       return render('dashboard', {
         sessionData: {
           token: token,
@@ -197,6 +227,44 @@ function doPost(e) {
       } else {
         return render('login', { phone: cleanPhone, error: 'Gagal mengirim OTP: ' + result.message, redirect: redirectParam });
       }
+    }
+
+    // === ADMIN API ===
+    if (action === 'admin_get_users') {
+      return ContentService.createTextOutput(JSON.stringify(adminGetUsers(e.parameter.token)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'admin_add_user') {
+      var userData = JSON.parse(e.parameter.data || '{}');
+      return ContentService.createTextOutput(JSON.stringify(adminAddUser(e.parameter.token, userData)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'admin_update_user') {
+      var userUpdates = JSON.parse(e.parameter.data || '{}');
+      return ContentService.createTextOutput(JSON.stringify(adminUpdateUser(e.parameter.token, e.parameter.email, userUpdates)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'admin_delete_user') {
+      return ContentService.createTextOutput(JSON.stringify(adminDeleteUser(e.parameter.token, e.parameter.email)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'admin_get_apps') {
+      return ContentService.createTextOutput(JSON.stringify(adminGetApps(e.parameter.token)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'admin_add_app') {
+      var appData = JSON.parse(e.parameter.data || '{}');
+      return ContentService.createTextOutput(JSON.stringify(adminAddApp(e.parameter.token, appData)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'admin_update_app') {
+      var appUpdates = JSON.parse(e.parameter.data || '{}');
+      return ContentService.createTextOutput(JSON.stringify(adminUpdateApp(e.parameter.token, e.parameter.app_id, appUpdates)))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'admin_delete_app') {
+      return ContentService.createTextOutput(JSON.stringify(adminDeleteApp(e.parameter.token, e.parameter.app_id)))
+        .setMimeType(ContentService.MimeType.JSON);
     }
 
     // === WHATSAPP OTP: VERIFY ===

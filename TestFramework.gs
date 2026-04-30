@@ -208,6 +208,8 @@ function runAllTests() {
   testSuite_Code();
   testSuite_AuthLib();
   testSuite_MultiRole();
+  testSuite_AdminAPI();
+  testSuite_SessionIntegration();
   
   // Print summary
   Logger.log('');
