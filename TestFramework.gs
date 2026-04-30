@@ -207,6 +207,7 @@ function runAllTests() {
   testSuite_AuditLog();
   testSuite_Code();
   testSuite_AuthLib();
+  testSuite_MultiRole();
   
   // Print summary
   Logger.log('');

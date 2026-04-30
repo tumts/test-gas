@@ -25,7 +25,8 @@ function doGet(e) {
       }
       
       // Render dashboard
-      const apps = getRegisteredApps(session.role);
+      const userAccess = checkUserByEmail(session.email) || {};
+      const apps = getRegisteredApps(session.role, userAccess.apps || '');
       // Build app URLs dengan token
       const appsWithToken = apps.map(function(app) {
         return {
@@ -33,7 +34,8 @@ function doGet(e) {
           name: app.name,
           url: buildAppUrl(app.url, token),
           icon: app.icon,
-          description: app.description
+          description: app.description,
+          category: app.category || 'umum'
         };
       });
       
@@ -44,9 +46,11 @@ function doGet(e) {
           phone: session.phone,
           name: session.name,
           role: session.role,
+          kelas: session.kelas || '',
           loginMethod: session.loginMethod
         },
-        apps: appsWithToken
+        apps: appsWithToken,
+        categories: getUniqueCategories(apps)
       });
     }
     // Token invalid — jatuh ke login page
@@ -83,6 +87,7 @@ function doGet(e) {
       phone: access.phone || '',
       name: access.name || googleResult.name,
       role: access.role,
+      kelas: access.kelas || '',
       loginMethod: 'google'
     });
     logAuditEvent('LOGIN_SUCCESS', { email: googleResult.email, method: 'google' });
@@ -152,6 +157,7 @@ function doPost(e) {
         phone: access.phone || '',
         name: access.name || googleResult.name,
         role: access.role,
+        kelas: access.kelas || '',
         loginMethod: 'google'
       });
 
@@ -216,6 +222,7 @@ function doPost(e) {
           phone: cleanPhone,
           name: userData.found ? userData.name : cleanPhone,
           role: userData.found ? userData.role : 'user',
+          kelas: userData.found ? (userData.kelas || '') : '',
           loginMethod: 'whatsapp_otp'
         });
 
@@ -373,6 +380,7 @@ function render(filename, args = {}) {
     template.redirect = '';
     template.sessionData = {};
     template.apps = [];
+    template.categories = [];
 
     // Assign properti dari args ke template
     Object.keys(args).forEach(key => {

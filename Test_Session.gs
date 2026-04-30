@@ -20,7 +20,7 @@ function testSuite_Session() {
         email: 'test@test.com',
         phone: '6281234567890',
         name: 'Test User',
-        role: 'user',
+        role: 'guru',
         loginMethod: 'google'
       });
       assert.isType(token, 'string', 'Token should be string');
@@ -57,6 +57,33 @@ function testSuite_Session() {
       var result = validateSession(token);
       assert.isTrue(result.valid, 'Minimal session should be valid');
       assert.equal(result.role, 'user', 'Default role should be user');
+    });
+    
+    it('should store and return kelas in session', function() {
+      var token = createSession({
+        email: 'siswa@test.com',
+        phone: '6285555555555',
+        name: 'Siswa Test',
+        role: 'siswa',
+        kelas: '7B',
+        loginMethod: 'whatsapp_otp'
+      });
+      
+      var result = validateSession(token);
+      assert.isTrue(result.valid, 'Session should be valid');
+      assert.equal(result.kelas, '7B', 'Kelas should be stored in session');
+    });
+    
+    it('should default kelas to empty string', function() {
+      var token = createSession({
+        email: 'guru@test.com',
+        role: 'guru',
+        loginMethod: 'google'
+      });
+      
+      var result = validateSession(token);
+      assert.isTrue(result.valid, 'Session should be valid');
+      assert.equal(result.kelas, '', 'Kelas should default to empty');
     });
   });
   
@@ -100,7 +127,8 @@ function testSuite_Session() {
         expiredToken, 'expired@test.com', '', 'Expired', 'user', 'google',
         Date.now() - 7200000, // created 2 hours ago
         Date.now() - 3600000, // expired 1 hour ago
-        'active'
+        'active',
+        ''
       ]);
       
       var result = validateSession(expiredToken);
@@ -180,7 +208,8 @@ function testSuite_Session() {
         'old_expired_token', 'old@test.com', '', 'Old', 'user', 'google',
         Date.now() - 90000000, // created 25+ hours ago
         Date.now() - 86500000, // expired 24+ hours ago
-        'active'
+        'active',
+        ''
       ]);
       
       // Insert recent active session
