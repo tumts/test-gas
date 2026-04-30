@@ -51,13 +51,46 @@ function doGet(e) {
     }
     // Token invalid — jatuh ke login page
   }
+
+  // Handle Google OAuth callback
+  if (e.parameter.code) {
+    var redirectUri = ScriptApp.getService().getUrl();
+    var googleResult = exchangeCodeForToken(e.parameter.code, redirectUri);
+    var stateRedirect = e.parameter.state || '';
+
+    if (!googleResult.success) {
+      return render('login', { phone: '', error: googleResult.message, redirect: stateRedirect });
+    }
+
+    var access = checkUserByEmail(googleResult.email);
+    if (!access.found) {
+      logAuditEvent('LOGIN_FAILED', { email: googleResult.email, method: 'google', detail: 'Email tidak terdaftar' });
+      return render('login', { phone: '', error: 'Email ' + googleResult.email + ' belum terdaftar. Hubungi admin.', redirect: stateRedirect });
+    }
+    if (!access.allowed) {
+      logAuditEvent('LOGIN_FAILED', { email: googleResult.email, method: 'google', detail: 'Akun dinonaktifkan' });
+      return render('login', { phone: '', error: 'Akun Anda dinonaktifkan. Hubungi admin.', redirect: stateRedirect });
+    }
+
+    var sessionToken = createSession({
+      email: googleResult.email,
+      phone: access.phone || '',
+      name: access.name || googleResult.name,
+      role: access.role,
+      loginMethod: 'google'
+    });
+    logAuditEvent('LOGIN_SUCCESS', { email: googleResult.email, method: 'google' });
+    return redirectAfterLogin(sessionToken, stateRedirect);
+  }
   
   // Render login page
   const page = e.parameter.page || 'login';
   const phone = e.parameter.phone || '';
   const error = e.parameter.error || '';
 
-  return render(page, { phone: phone, error: error, redirect: redirectUrl });
+  var googleAuthUrl = '';
+  try { googleAuthUrl = getGoogleAuthUrl(ScriptApp.getService().getUrl(), redirectUrl); } catch(err) {}
+  return render(page, { phone: phone, error: error, redirect: redirectUrl, googleAuthUrl: googleAuthUrl });
 }
 
 /**
@@ -87,7 +120,8 @@ function doPost(e) {
       return render('login', { phone: '', error: '', redirect: '' });
     }
 
-    // === GOOGLE LOGIN ===
+    // === GOOGLE LOGIN (deprecated — kept for backward compatibility) ===
+    // New OAuth 2.0 flow handles Google login via doGet() callback.
     if (action === 'google_login') {
       const idToken = e.parameter.id_token;
       const googleResult = verifyGoogleToken(idToken);
@@ -306,6 +340,7 @@ function render(filename, args = {}) {
     template.error = '';
     template.phone = '';
     template.redirect = '';
+    template.googleAuthUrl = '';
     template.sessionData = {};
     template.apps = [];
 

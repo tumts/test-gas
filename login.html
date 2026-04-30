@@ -6,9 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <? var gClientId = getGoogleClientIdSafe(); ?>
-    <? if (gClientId) { ?>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <? } ?>
     <style>
       body { background-color: #f9fafb; }
     </style>
@@ -28,34 +25,11 @@
       <? } ?>
 
       <? if (gClientId) { ?>
-      <!-- Google Sign-In Button -->
-      <div id="googleBtnContainer" class="flex justify-center mb-4">
-        <div id="g_id_onload"
-             data-client_id="<?= gClientId ?>"
-             data-callback="handleGoogleLogin"
-             data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin"
-             data-type="standard"
-             data-size="large"
-             data-theme="outline"
-             data-text="sign_in_with"
-             data-shape="rectangular"
-             data-logo_alignment="left"
-             data-width="320">
-        </div>
-      </div>
-
-      <!-- Google login loading state -->
-      <div id="googleLoading" class="hidden text-center py-3 mb-4">
-        <svg class="animate-spin h-5 w-5 text-blue-600 inline-block mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <span class="text-sm text-gray-600">Memverifikasi akun Google...</span>
-      </div>
-
-      <!-- Separator -->
+      <a href="<?= googleAuthUrl ?>" 
+         class="flex items-center justify-center w-full border-2 border-gray-200 rounded-xl py-3 hover:bg-gray-50 transition-colors mb-4 no-underline">
+        <img src="https://developers.google.com/identity/images/g-logo.png" class="w-5 h-5 mr-3" alt="Google">
+        <span class="font-medium text-gray-700">Sign in with Google</span>
+      </a>
       <div class="flex items-center my-5">
         <hr class="flex-grow border-gray-200">
         <span class="px-3 text-xs text-gray-400 uppercase tracking-wider">atau</span>
@@ -92,44 +66,6 @@
     </div>
 
     <script>
-      <? if (gClientId) { ?>
-      function handleGoogleLogin(response) {
-        document.getElementById('googleBtnContainer').classList.add('hidden');
-        document.getElementById('googleLoading').classList.remove('hidden');
-
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '<?= ScriptApp.getService().getUrl() ?>';
-
-        var actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        actionInput.value = 'google_login';
-        form.appendChild(actionInput);
-
-        var tokenInput = document.createElement('input');
-        tokenInput.type = 'hidden';
-        tokenInput.name = 'id_token';
-        tokenInput.value = response.credential;
-        form.appendChild(tokenInput);
-
-        var phoneInput = document.createElement('input');
-        phoneInput.type = 'hidden';
-        phoneInput.name = 'phone';
-        phoneInput.value = '';
-        form.appendChild(phoneInput);
-
-        var redirectInput = document.createElement('input');
-        redirectInput.type = 'hidden';
-        redirectInput.name = 'redirect';
-        redirectInput.value = '<?= redirect || '' ?>';
-        form.appendChild(redirectInput);
-
-        document.body.appendChild(form);
-        form.submit();
-      }
-      <? } ?>
-
       document.getElementById('loginForm').addEventListener('submit', function() {
         var btn = this.querySelector('button[type="submit"]');
         btn.disabled = true;

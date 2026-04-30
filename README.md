@@ -4,7 +4,7 @@ Sistem autentikasi terpusat (Single Sign-On) untuk aplikasi **Google Apps Script
 
 ## **Fitur Utama**
 
-* **Dual Login**: Login via Google Sign-In (GIS) atau OTP WhatsApp (GOWA API).
+* **Dual Login**: Login via Google OAuth 2.0 (Authorization Code flow) atau OTP WhatsApp (GOWA API).
 * **Whitelist User**: Hanya email/nomor terdaftar yang bisa login.
 * **Hub Dashboard**: Dashboard terpusat menampilkan daftar aplikasi yang bisa diakses.
 * **Session Terpusat**: Session disimpan di Google Sheet, memungkinkan SSO ke beberapa Apps Script webapp.
@@ -18,7 +18,7 @@ Sistem autentikasi terpusat (Single Sign-On) untuk aplikasi **Google Apps Script
 | :---- | :---- |
 | Code.gs | Controller utama (routing doGet/doPost, redirect, session check). |
 | Auth.gs | Modul OTP: generate, hash (SHA-256 + pepper), kirim via GOWA API, verifikasi. |
-| GoogleAuth.gs | Verifikasi Google ID Token dari Google Identity Services. |
+| GoogleAuth.gs | Google OAuth 2.0 Authorization Code flow + ID Token verification. |
 | UserWhitelist.gs | Pengecekan whitelist user dari Google Sheet tab 'users'. |
 | Session.gs | Manajemen session terpusat (create, validate, delete, cleanup). |
 | AppRegistry.gs | Registry aplikasi hub dari Google Sheet tab 'apps'. |
@@ -76,8 +76,13 @@ Jika ingin mengaktifkan tombol "Sign in with Google":
 3. Buka **APIs & Services > Credentials**
 4. Klik **Create Credentials > OAuth Client ID**
 5. Application type: **Web application**
-6. Authorized JavaScript origins: `https://script.google.com`
-7. Salin Client ID → tambahkan Script Property `GOOGLE_CLIENT_ID`
+6. Authorized redirect URIs — tambahkan URL web app GAS Anda:
+   - `https://script.google.com/macros/s/DEPLOYMENT_ID/exec` (production)
+   - `https://script.google.com/macros/s/DEPLOYMENT_ID/dev` (development, opsional)
+7. Salin **Client ID** → tambahkan Script Property `GOOGLE_CLIENT_ID`
+8. Salin **Client Secret** → tambahkan Script Property `GOOGLE_CLIENT_SECRET`
+
+> **Catatan:** Authorized JavaScript Origins **tidak diperlukan** — flow ini menggunakan server-side OAuth redirect, bukan client-side GIS button.
 
 > Jika `GOOGLE_CLIENT_ID` tidak di-set, tombol Google otomatis disembunyikan. Hanya login OTP yang tersedia.
 

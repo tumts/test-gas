@@ -1,7 +1,7 @@
 /**
  * @file GoogleAuth.gs
- * @description Verifikasi Google ID Token dari Google Identity Services (GIS).
- * Memerlukan Script Property: GOOGLE_CLIENT_ID
+ * @description Google OAuth 2.0 Authorization Code flow + ID Token verification.
+ * Memerlukan Script Properties: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
  */
 
 /**
@@ -23,6 +23,74 @@ function getGoogleClientId() {
  */
 function getGoogleClientIdSafe() {
   return PropertiesService.getScriptProperties().getProperty('GOOGLE_CLIENT_ID') || '';
+}
+
+/**
+ * Membangun Google OAuth 2.0 authorization URL untuk redirect-based login.
+ * @param {string} redirectUri - URI redirect (URL web app GAS).
+ * @param {string} state - State parameter untuk menyimpan redirect URL child app.
+ * @returns {string} Google OAuth authorization URL
+ */
+function getGoogleAuthUrl(redirectUri, state) {
+  var clientId = getGoogleClientId();
+  var params = [
+    'client_id=' + encodeURIComponent(clientId),
+    'redirect_uri=' + encodeURIComponent(redirectUri),
+    'response_type=code',
+    'scope=' + encodeURIComponent('openid email profile'),
+    'state=' + encodeURIComponent(state || ''),
+    'prompt=select_account'
+  ];
+  return 'https://accounts.google.com/o/oauth2/v2/auth?' + params.join('&');
+}
+
+/**
+ * Menukar authorization code dengan token, lalu verifikasi id_token.
+ * @param {string} code - Authorization code dari Google OAuth callback.
+ * @param {string} redirectUri - URI redirect yang sama dengan saat authorization request.
+ * @returns {Object} { success, email, name, picture, message }
+ */
+function exchangeCodeForToken(code, redirectUri) {
+  try {
+    if (!code) {
+      return { success: false, message: 'Authorization code tidak ditemukan.' };
+    }
+
+    var clientId = getGoogleClientId();
+    var clientSecret = PropertiesService.getScriptProperties().getProperty('GOOGLE_CLIENT_SECRET');
+    if (!clientSecret) {
+      return { success: false, message: 'GOOGLE_CLIENT_SECRET belum dikonfigurasi di Script Properties.' };
+    }
+
+    var tokenResponse = UrlFetchApp.fetch('https://oauth2.googleapis.com/token', {
+      method: 'post',
+      contentType: 'application/x-www-form-urlencoded',
+      payload: {
+        code: code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code'
+      },
+      muteHttpExceptions: true
+    });
+
+    var tokenCode = tokenResponse.getResponseCode();
+    if (tokenCode !== 200) {
+      console.error('Token exchange error: HTTP ' + tokenCode + ' - ' + tokenResponse.getContentText());
+      return { success: false, message: 'Gagal menukar authorization code. Silakan coba lagi.' };
+    }
+
+    var tokenData = JSON.parse(tokenResponse.getContentText());
+    if (!tokenData.id_token) {
+      return { success: false, message: 'Response token tidak mengandung id_token.' };
+    }
+
+    return verifyGoogleToken(tokenData.id_token);
+  } catch (e) {
+    console.error('exchangeCodeForToken error: ' + e.message);
+    return { success: false, message: 'Gagal memproses login Google: ' + e.message };
+  }
 }
 
 /**
