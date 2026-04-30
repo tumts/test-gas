@@ -261,7 +261,8 @@ function redirectAfterLogin(token, redirectUrl) {
 }
 
 /**
- * Helper: Bangun halaman redirect dengan URL yang di-escape untuk mencegah XSS.
+ * Helper: Bangun halaman "Login Berhasil" dengan tombol navigasi ke target URL.
+ * Menggunakan <a target="_top"> agar user-click memenuhi sandbox allow-top-navigation-by-user-activation.
  * @param {string} url - Target URL (sudah divalidasi)
  * @returns {HtmlService.HtmlOutput}
  */
@@ -269,12 +270,22 @@ function buildRedirectPage(url) {
   const safeUrl = escapeJsString(url);
   return HtmlService.createHtmlOutput(
     '<!DOCTYPE html><html><head><meta charset="UTF-8">' +
-    '<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f9fafb;}</style>' +
-    '</head><body><div style="text-align:center;">' +
-    '<p style="color:#666;">Mengalihkan...</p>' +
-    '<script>window.top.location.href="' + safeUrl + '";</script>' +
+    '<base target="_top">' +
+    '<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;' +
+    'min-height:100vh;background:#f9fafb;margin:0;}' +
+    '.card{text-align:center;background:#fff;padding:2rem;border-radius:1rem;' +
+    'box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:360px;width:100%;}' +
+    '.btn{display:inline-block;background:#2563eb;color:#fff;font-weight:700;' +
+    'padding:0.875rem 2rem;border-radius:0.75rem;text-decoration:none;' +
+    'transition:background 0.2s;}' +
+    '.btn:hover{background:#1d4ed8;}</style>' +
+    '</head><body><div class="card">' +
+    '<p style="font-size:2rem;margin:0 0 0.5rem;">&#10003;</p>' +
+    '<p style="color:#111;font-weight:600;font-size:1.1rem;margin:0 0 0.25rem;">Login Berhasil</p>' +
+    '<p style="color:#666;font-size:0.875rem;margin:0 0 1.5rem;">Klik tombol di bawah untuk melanjutkan</p>' +
+    '<a href="' + safeUrl + '" class="btn" target="_top">Masuk ke Dashboard &rarr;</a>' +
     '</div></body></html>'
-  ).setTitle('Redirecting...');
+  ).setTitle('Login Berhasil');
 }
 
 /**
