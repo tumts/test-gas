@@ -8,33 +8,28 @@
     <style>
       body { background-color: #f9fafb; }
     </style>
+    <?!= include('_navbar_styles') ?>
   </head>
-  <body class="min-h-screen p-4 font-sans">
+  <body class="min-h-screen p-4 font-sans pb-24">
     <div class="max-w-2xl mx-auto">
-      
-      <!-- Header -->
-      <div class="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-gray-100">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-xl font-extrabold text-gray-900">Auth Hub</h1>
-            <p class="text-sm text-gray-500 mt-1">
-              Selamat datang, <span class="font-semibold text-gray-800"><?= sessionData.name ?></span>
-            </p>
-            <p class="text-xs text-gray-400 mt-0.5">
-              <?= sessionData.email || sessionData.phone ?> &middot; <?= sessionData.loginMethod ?> &middot; <?= sessionData.role ?>
-            </p>
-          </div>
-          <form action="<?= ScriptApp.getService().getUrl() ?>" method="POST" style="display:inline;">
-            <input type="hidden" name="action" value="logout">
-            <input type="hidden" name="token" value="<?= sessionData.token ?>">
-            <input type="hidden" name="phone" value="">
-            <button type="submit"
-                    class="text-sm text-red-500 hover:text-red-700 font-medium px-3 py-2 rounded-lg hover:bg-red-50 transition-colors">
-              Logout
-            </button>
-          </form>
-        </div>
+
+      <!-- Compact Top Bar -->
+      <div class="mb-4">
+        <h1 class="text-xl font-extrabold text-gray-900">Auth Hub</h1>
+        <p class="text-xs text-gray-400 mt-0.5">
+          <?= sessionData.name ?> &middot; <?= sessionData.role ?>
+        </p>
       </div>
+
+      <!-- Category Pill Bar -->
+      <? if (categories.length > 1) { ?>
+      <div class="pill-bar mb-4 p-1">
+        <button class="pill-tab active" onclick="filterApps(this, 'all')">Semua</button>
+        <? for (var i = 0; i < categories.length; i++) { ?>
+          <button class="pill-tab" onclick="filterApps(this, '<?= escapeJsString(categories[i]) ?>')"><?= categories[i] ?></button>
+        <? } ?>
+      </div>
+      <? } ?>
 
       <!-- App Grid -->
       <div class="mb-4">
@@ -47,15 +42,16 @@
           <p class="text-gray-400 text-xs mt-1">Hubungi admin untuk menambahkan aplikasi ke hub.</p>
         </div>
       <? } else { ?>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <? for (let i = 0; i < apps.length; i++) { ?>
-            <a href="<?= apps[i].url ?>" 
-               class="bg-white rounded-2xl shadow hover:shadow-lg p-5 border border-gray-100 hover:border-blue-200 transition-all block group">
-              <div class="flex items-start gap-3">
+        <div class="grid grid-cols-2 gap-4" id="app-grid">
+          <? for (var i = 0; i < apps.length; i++) { ?>
+            <a href="<?= apps[i].url ?>"
+               data-category="<?= escapeHtmlAttr(apps[i].category || 'umum') ?>"
+               class="app-card bg-white rounded-2xl shadow hover:shadow-lg p-5 border border-gray-100 hover:border-blue-200 transition-all block group">
+              <div class="flex flex-col items-center text-center gap-2">
                 <span class="text-2xl"><?= apps[i].icon || '📱' ?></span>
                 <div>
-                  <h3 class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors"><?= apps[i].name ?></h3>
-                  <p class="text-xs text-gray-500 mt-1"><?= apps[i].description ?></p>
+                  <h3 class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-sm"><?= apps[i].name ?></h3>
+                  <p class="text-[10px] text-gray-500 mt-1"><?= apps[i].description ?></p>
                 </div>
               </div>
             </a>
@@ -63,10 +59,34 @@
         </div>
       <? } ?>
 
-      <!-- Footer -->
-      <div class="mt-8 text-center">
-        <p class="text-xs text-gray-400">&copy; 2026 Auth Hub</p>
-      </div>
     </div>
+
+    <!-- HUB global -->
+    <script>
+      window.__HUB__ = {
+        baseUrl: '<?= ScriptApp.getService().getUrl() ?>',
+        token: '<?= sessionData.token ?>',
+        role: '<?= sessionData.role ?>',
+        activePage: 'home'
+      };
+
+      function filterApps(btn, category) {
+        var pills = btn.parentElement.querySelectorAll('.pill-tab');
+        for (var i = 0; i < pills.length; i++) {
+          pills[i].classList.remove('active');
+        }
+        btn.classList.add('active');
+
+        var cards = document.querySelectorAll('.app-card');
+        for (var i = 0; i < cards.length; i++) {
+          if (category === 'all' || cards[i].getAttribute('data-category') === category) {
+            cards[i].style.display = '';
+          } else {
+            cards[i].style.display = 'none';
+          }
+        }
+      }
+    </script>
+    <?!= include('_navbar') ?>
   </body>
 </html>

@@ -1,0 +1,40 @@
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-inner">
+    <a id="nav-home" class="nav-item" href="#">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Home</span>
+    </a>
+    <a id="nav-admin" class="nav-item" href="#" style="display:none;">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Admin</span>
+    </a>
+    <a id="nav-profile" class="nav-item" href="#">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Profil</span>
+    </a>
+  </div>
+</nav>
+<script>
+(function() {
+  var hub = window.__HUB__ || {};
+  var baseUrl = hub.baseUrl || '';
+  var token = hub.token || '';
+  var role = (hub.role || '').toLowerCase();
+  var activePage = hub.activePage || 'home';
+
+  var homeLink = document.getElementById('nav-home');
+  var adminLink = document.getElementById('nav-admin');
+  var profileLink = document.getElementById('nav-profile');
+
+  if (homeLink) homeLink.href = baseUrl + '?token=' + encodeURIComponent(token);
+  if (profileLink) profileLink.href = baseUrl + '?token=' + encodeURIComponent(token) + '&page=profile';
+
+  if (role === 'admin' && adminLink) {
+    adminLink.style.display = '';
+    adminLink.href = baseUrl + '?token=' + encodeURIComponent(token) + '&page=admin';
+  }
+
+  var activeEl = document.getElementById('nav-' + activePage);
+  if (activeEl) activeEl.classList.add('active');
+})();
+</script>

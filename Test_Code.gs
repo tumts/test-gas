@@ -264,6 +264,62 @@ function testSuite_Code() {
     });
   });
   
+  describe('Code — render() new pages', function() {
+
+    it('should render admin page without error', function() {
+      assert.doesNotThrow(function() {
+        var output = render('admin', {
+          sessionData: { token: 'test', email: 'admin@test.com', phone: '', name: 'Admin', role: 'admin', kelas: '', loginMethod: 'google' }
+        });
+        assert.isTruthy(output, 'Should return HtmlOutput');
+      }, 'render admin should not throw');
+    });
+
+    it('should render profile page without error', function() {
+      assert.doesNotThrow(function() {
+        var output = render('profile', {
+          sessionData: { token: 'test', email: 'user@test.com', phone: '628123', name: 'User', role: 'guru', kelas: '7A', loginMethod: 'whatsapp_otp' }
+        });
+        assert.isTruthy(output, 'Should return HtmlOutput');
+      }, 'render profile should not throw');
+    });
+
+    it('should render dashboard with categories', function() {
+      assert.doesNotThrow(function() {
+        var output = render('dashboard', {
+          sessionData: { token: 'test', email: 'user@test.com', phone: '', name: 'User', role: 'guru', kelas: '', loginMethod: 'google' },
+          apps: [{ id: 'app1', name: 'Test', url: 'https://example.com', icon: '📱', description: 'Test app', category: 'akademik' }],
+          categories: ['akademik', 'umum']
+        });
+        assert.isTruthy(output, 'Should return HtmlOutput');
+      }, 'render dashboard with categories should not throw');
+    });
+
+    it('admin page should contain Admin Panel text', function() {
+      var output = render('admin', {
+        sessionData: { token: 'test', email: 'admin@test.com', phone: '', name: 'Admin', role: 'admin', kelas: '', loginMethod: 'google' }
+      });
+      var content = output.getContent();
+      assert.contains(content, 'Admin Panel', 'Admin page should contain Admin Panel');
+    });
+
+    it('profile page should contain Profil text', function() {
+      var output = render('profile', {
+        sessionData: { token: 'test', email: 'user@test.com', phone: '', name: 'User', role: 'guru', kelas: '', loginMethod: 'google' }
+      });
+      var content = output.getContent();
+      assert.contains(content, 'Profil', 'Profile page should contain Profil');
+    });
+
+    it('profile page should contain logout form', function() {
+      var output = render('profile', {
+        sessionData: { token: 'test', email: 'user@test.com', phone: '', name: 'User', role: 'guru', kelas: '', loginMethod: 'google' }
+      });
+      var content = output.getContent();
+      assert.contains(content, 'logout', 'Profile page should contain logout action');
+    });
+  });
+
   describe('Code — isAllowedRedirect()', function() {
     
     beforeEach(function() {
