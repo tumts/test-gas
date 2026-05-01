@@ -59,6 +59,8 @@ graph TB
         LoginHTML["login.html"]
         VerifyHTML["verify.html"]
         DashboardHTML["dashboard.html"]
+        AdminHTML["admin.html"]
+        ProfileHTML["profile.html"]
     end
     
     subgraph "Data Store (Google Sheet)"
@@ -88,6 +90,8 @@ graph TB
     CodeGS --> LoginHTML
     CodeGS --> VerifyHTML
     CodeGS --> DashboardHTML
+    CodeGS --> AdminHTML
+    CodeGS --> ProfileHTML
     
     AuthGS --> GOWA
     GoogleAuthGS --> GoogleOAuth

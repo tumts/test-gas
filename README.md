@@ -5,10 +5,14 @@ Sistem autentikasi terpusat (Single Sign-On) untuk aplikasi **Google Apps Script
 ## **Fitur Utama**
 
 * **Dual Login**: Login via Google OAuth 2.0 (Authorization Code flow) atau OTP WhatsApp (GOWA API).
+* **Multi-Role Access Control**: 5 role bawaan — `admin`, `kepsek`, `guru`, `orangtua`, `siswa` — dengan hybrid access control.
+* **Admin Panel**: CRUD users & apps via halaman admin (`admin.html`) yang berkomunikasi dengan `AdminAPI.gs`.
 * **Whitelist User**: Hanya email/nomor terdaftar yang bisa login.
-* **Hub Dashboard**: Dashboard terpusat menampilkan daftar aplikasi yang bisa diakses.
+* **Hub Dashboard**: Dashboard terpusat menampilkan daftar aplikasi berdasarkan kategori. Mobile-first responsive design.
+* **Category-based App Filtering**: Aplikasi dikelompokkan berdasarkan kategori dengan pill bar untuk filtering.
 * **Session Terpusat**: Session disimpan di Google Sheet, memungkinkan SSO ke beberapa Apps Script webapp.
-* **App Registry**: Daftar aplikasi dikelola via Google Sheet.
+* **App Registry**: Daftar aplikasi dikelola via Google Sheet dengan role-based visibility.
+* **Mobile-first UI**: Bottom navigation bar, compact layout, responsive 2-column grid.
 * **Audit Log**: Pencatatan aktivitas login/logout/akses.
 * **Auto Cleanup**: Scheduled trigger untuk membersihkan session expired dan log lama.
 
@@ -22,6 +26,7 @@ Sistem autentikasi terpusat (Single Sign-On) untuk aplikasi **Google Apps Script
 | UserWhitelist.gs | Pengecekan whitelist user dari Google Sheet tab 'users'. |
 | Session.gs | Manajemen session terpusat (create, validate, delete, cleanup). |
 | AppRegistry.gs | Registry aplikasi hub dari Google Sheet tab 'apps'. |
+| AdminAPI.gs | Backend API admin panel (CRUD users & apps). |
 | AuditLog.gs | Pencatatan aktivitas ke Google Sheet tab 'audit_log'. |
 | Triggers.gs | Setup time-driven triggers untuk maintenance otomatis. |
 | Setup.gs | Generator otomatis spreadsheet dan tabel. Jalankan sekali untuk setup awal. |
@@ -29,13 +34,17 @@ Sistem autentikasi terpusat (Single Sign-On) untuk aplikasi **Google Apps Script
 | login.html | Halaman login (Google Sign-In + form OTP). |
 | verify.html | Halaman verifikasi kode OTP. |
 | dashboard.html | Halaman dashboard hub setelah login. |
+| admin.html | Halaman admin panel (CRUD users & apps). |
+| profile.html | Halaman profil user + logout. |
+| _navbar.html | Bottom navigation bar component. |
+| _navbar_styles.html | CSS untuk navbar dan pill tabs. |
 
 ## **Quick Start (Setup Awal)**
 
 ### 1. Clone & Push ke GAS
 
 ```bash
-git clone https://github.com/tumts/gas-workspace-hub.git
+git clone <YOUR_REPO_URL>
 cd gas-workspace-hub
 clasp login
 clasp create --type webapp --title "GAS Workspace Hub"
@@ -102,15 +111,45 @@ Klik **Deploy > New deployment > Web app**:
 - Execute as: **Me**
 - Who has access: **Anyone** (termasuk tanpa akun Google)
 
+## **Roles**
+
+Sistem mendukung 5 role bawaan:
+
+| Role | Deskripsi |
+| :---- | :---- |
+| `admin` | Akses penuh ke semua fitur dan semua apps |
+| `kepsek` | Kepala sekolah |
+| `guru` | Guru / pengajar |
+| `orangtua` | Orang tua / wali murid |
+| `siswa` | Siswa |
+
+**Aturan akses:**
+- `admin` bisa mengakses semua apps tanpa batasan.
+- App access diatur via kolom `allowedRoles` (comma-separated) di tab `apps`. Contoh: `guru,siswa` — hanya user dengan role `guru` atau `siswa` yang bisa melihat app tersebut.
+- Override per user: kolom `apps` di tab `users` bisa diisi dengan comma-separated app IDs untuk memberikan akses tambahan di luar role default.
+- Kolom `kelas` di tab `users` digunakan untuk identifikasi kelas siswa (contoh: `7A`, `8B`). Terpisah dari role.
+
+Lihat [docs/roles.md](docs/roles.md) untuk dokumentasi lengkap.
+
 ## **Setup Test (Opsional)**
 
-Untuk menjalankan automated test suite:
+Project ini memiliki **11 test suites** yang dijalankan via `runAllTests()` di GAS Editor (bukan CLI).
+
+Untuk setup environment test:
 
 ```
 setupTestSheet()
 ```
 
 Ini membuat spreadsheet terpisah dengan data dummy untuk testing.
+
+Untuk menjalankan semua test:
+
+```
+runAllTests()
+```
+
+Lihat [docs/testing.md](docs/testing.md) untuk panduan lengkap.
 
 ## **Auth Library untuk Child Apps**
 

@@ -1,7 +1,7 @@
 # Codebase Map
 
 > Dihasilkan dari scan aktual repo `gas-workspace-hub`.
-> Terakhir diperbarui: 2026-05-01
+> Terakhir diperbarui: 2026-05-01 (P5 update)
 
 ---
 
@@ -51,7 +51,11 @@
 |:-----|:------|
 | `login.html` | Halaman login — dual mode: tombol "Sign in with Google" (OAuth redirect) + form OTP WhatsApp. Tailwind CSS. |
 | `verify.html` | Halaman verifikasi kode OTP — input 6 digit, countdown timer. |
-| `dashboard.html` | Dashboard hub setelah login — card grid aplikasi per kategori, info session, tombol logout. Mobile responsive (bottom nav). |
+| `dashboard.html` | Dashboard hub setelah login — compact header, category pill bar, 2-column app grid, bottom navigation. Mobile-first responsive. |
+| `admin.html` | Admin panel — pill tabs (Users/Apps), CRUD via `google.script.run` ke `AdminAPI.gs`. |
+| `profile.html` | Profil user — informasi session aktif + tombol logout. |
+| `_navbar.html` | Bottom navigation bar — JavaScript-based, membaca data dari `window.__HUB__`. |
+| `_navbar_styles.html` | CSS untuk bottom navigation bar dan pill tabs. |
 
 ## 4. File Konfigurasi
 
@@ -103,7 +107,7 @@ Code.gs (controller utama)
 ├── memanggil → AppRegistry.gs (getRegisteredApps, getUniqueCategories, buildAppUrl)
 ├── memanggil → AuditLog.gs (logAuditEvent)
 ├── memanggil → AdminAPI.gs (adminGetUsers, adminAddUser, adminUpdateUser, adminDeleteUser, adminGetApps, adminAddApp, adminUpdateApp, adminDeleteApp)
-└── render → login.html, verify.html, dashboard.html
+└── render → login.html, verify.html, dashboard.html, admin.html, profile.html
 
 Auth.gs
 ├── menggunakan → ScriptProperties (OTP_SECRET_PEPPER, GOWA_API_KEY)
@@ -134,6 +138,9 @@ AuditLog.gs
 Triggers.gs
 ├── memanggil → Session.gs (cleanExpiredSessions)
 └── memanggil → AuditLog.gs (cleanOldAuditLogs)
+
+dashboard.html, admin.html, profile.html
+└── include → _navbar_styles.html, _navbar.html
 
 lib/gas-auth-lib/AuthMiddleware.gs (LIBRARY TERPISAH)
 ├── menggunakan → ScriptProperties child app (AUTH_SESSION_SHEET_ID, AUTH_HUB_URL)

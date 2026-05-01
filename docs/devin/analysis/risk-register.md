@@ -1,7 +1,7 @@
 # Risk Register
 
 > Area risiko berdasarkan scan aktual repo `gas-workspace-hub`.
-> Terakhir diperbarui: 2026-05-01
+> Terakhir diperbarui: 2026-05-01 (P5 update)
 
 ---
 
@@ -31,7 +31,7 @@
 |:------|:-------|
 | **File** | `Code.gs` (baris 236–271) |
 | **Fungsi kunci** | `doPost()` handler untuk `admin_get_users`, `admin_add_user`, `admin_update_user`, `admin_delete_user`, `admin_get_apps`, `admin_add_app`, `admin_update_app`, `admin_delete_app` |
-| **Alasan risiko** | Admin API endpoints di-dispatch langsung dari `doPost()` berdasarkan `e.parameter.action`. Validasi hanya via session token (`requireAdmin()`), **tidak ada CSRF token** terpisah. `e.parameter.data` di-parse langsung dari JSON tanpa sanitasi mendalam. Potensi CSRF attack jika attacker mengetahui format request. |
+| **Alasan risiko** | Admin API endpoints di-dispatch langsung dari `doPost()` berdasarkan `e.parameter.action`. Validasi hanya via session token (`requireAdmin()`), **tidak ada CSRF token** terpisah. `e.parameter.data` di-parse langsung dari JSON tanpa sanitasi mendalam. Potensi CSRF attack jika attacker mengetahui format request. Sejak P4, admin panel (`admin.html`) memanggil AdminAPI functions via `google.script.run` dari client-side. Validasi tetap server-side via `requireAdmin()`. |
 | **Jangan ubah tanpa...** | Review auth check (`requireAdmin()`), input validation, dan pertimbangkan penambahan CSRF protection. Jalankan `testSuite_AdminAPI()` dan `testSuite_Code()` setelah perubahan. |
 
 ### 4. AdminAPI.gs — CRUD Users & Apps

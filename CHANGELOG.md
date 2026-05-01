@@ -2,6 +2,50 @@
 
 ## **Unreleased**
 
+### **Added — P4: Mobile UI**
+
+* **Admin Panel (`admin.html`)**: Halaman admin panel dengan pill tabs (Users/Apps), CRUD operations via `google.script.run` yang memanggil `AdminAPI.gs`.
+* **Profile Page (`profile.html`)**: Halaman profil user menampilkan informasi session + tombol logout.
+* **Bottom Navigation (`_navbar.html`)**: Bottom navigation bar pill-in-pill, JavaScript-based, membaca data dari `window.__HUB__`.
+* **Navbar Styles (`_navbar_styles.html`)**: CSS terpisah untuk bottom navigation bar dan pill tabs.
+* **Dashboard Redesign (`dashboard.html`)**: Compact header, category pill bar, 2-column app grid, bottom navigation. Mobile-first responsive design.
+* **Render Tests**: 6 test cases baru di `Test_Code.gs` untuk render admin, profile, dan dashboard pages.
+
+### **Added — P3: AdminAPI CRUD**
+
+* **AdminAPI (`AdminAPI.gs`)**: Full CRUD backend untuk users & apps dengan `requireAdmin()` authorization check.
+* **Role Validation**: Validasi role terhadap `VALID_ROLES` array: `admin`, `kepsek`, `guru`, `orangtua`, `siswa`.
+* **Audit Logging**: Pencatatan audit log untuk semua operasi admin (add, update, delete users/apps).
+* **Admin API Endpoints di `doPost()`**: `admin_get_users`, `admin_add_user`, `admin_update_user`, `admin_delete_user`, `admin_get_apps`, `admin_add_app`, `admin_update_app`, `admin_delete_app`.
+* **Test Suites**: `Test_AdminAPI.gs` (37 test cases) dan `Test_SessionIntegration.gs` (7 test cases).
+
+### **Added — P2: Multi-Role Schema**
+
+* **Kolom `kelas` dan `apps`**: Ditambahkan ke tab `users` (7→9 kolom) — `kelas` (H) untuk identifikasi kelas siswa, `apps` (I) untuk override akses per user.
+* **Kolom `kelas` di Sessions**: Ditambahkan ke tab `sessions` (9→10 kolom) — kolom J.
+* **Kolom `category` di Apps**: Ditambahkan ke tab `apps` (7→8 kolom) — kolom H untuk kategori aplikasi.
+* **`allowedRoles`**: Kolom `requiredRole` diubah menjadi `allowedRoles` (comma-separated) di tab `apps` untuk mendukung multi-role access.
+* **Hybrid Access Control**: Role-based default access (dari `allowedRoles` di tab apps) + user-specific override (via kolom `apps` di tab users).
+* **Test Suite**: `Test_MultiRole.gs` untuk verifikasi multi-role access patterns.
+
+### **Fixed — P1: Library Bug Fixes**
+
+* **Sandbox Bug**: Fixed `window.top.location.href` yang di-block oleh GAS iframe sandbox → diganti dengan `buildSafeRedirectPage()`.
+* **XSS Prevention**: Added `escapeHtmlAttr()` ke library (`lib/gas-auth-lib/AuthMiddleware.gs`) untuk mencegah XSS injection.
+* **Multi-Role `hasRole()`**: `hasRole()` kini support comma-separated multi-role checking.
+* **Case-Insensitive Admin**: Admin bypass di `hasRole()` kini case-insensitive.
+* **Null Guard**: Null guard untuk `authResult.role` sebelum `split()` di `hasRole()`.
+* **Timezone**: Timezone library diubah ke `Asia/Jakarta`.
+* **Auth Library Tests**: Added `Test_AuthLib.gs` (19 test cases).
+* **Phone-Only Lookup**: Fallback ke `checkUserByPhone` untuk apps-override lookup pada phone-only users.
+
+### **Changed — OAuth 2.0 Migration**
+
+* **OAuth Flow**: Switch Google login dari GIS embedded button ke OAuth 2.0 Authorization Code flow (server-side redirect).
+* **CSRF Nonce**: Implementasi CSRF nonce via `CacheService` untuk OAuth state validation.
+* **User-Activated Redirect**: User-activated button di redirect page menggantikan auto-redirect yang di-block oleh sandbox.
+* **XSS Fix**: `escapeHtmlAttr()` ditambahkan di `buildRedirectPage()` untuk sanitasi output HTML.
+
 ### **Added — Setup & Configuration**
 
 * **Setup Generator (`Setup.gs`)**: Script otomatis untuk membuat spreadsheet production dan test beserta semua tab yang dibutuhkan. Jalankan `setupProductionSheet()` sekali untuk setup awal — tidak perlu buat spreadsheet manual.
@@ -49,7 +93,7 @@
 
 ### **Added — Fase 1.5**
 
-* **Login Google (GIS)**: Menambahkan opsi login menggunakan akun Google via Google Identity Services. File baru: `GoogleAuth.gs`.
+* **Login Google (OAuth 2.0 Authorization Code flow)**: Menambahkan opsi login menggunakan akun Google via OAuth 2.0 Authorization Code flow (server-side). File baru: `GoogleAuth.gs`.
 * **Whitelist User**: Menambahkan sistem whitelist user berbasis Google Sheet untuk kontrol akses. File baru: `UserWhitelist.gs`. Hanya email/nomor yang terdaftar dan berstatus `active` yang bisa login.
 * **Whitelist OTP WhatsApp**: Nomor telepon dicek terhadap whitelist sebelum OTP dikirim. Nomor yang tidak terdaftar akan ditolak.
 * **Dual Login UI**: Halaman login (`login.html`) kini menampilkan dua opsi: tombol "Sign in with Google" dan form OTP WhatsApp.
